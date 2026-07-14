@@ -51,6 +51,8 @@ public class ItemRaiton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum GIAN = new ItemJutsu.JutsuEnum(3, "false_darkness", 'B', 100d, new EntityFalseDarkness.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum KIRIN = new ItemJutsu.JutsuEnum(4, "kirin", 'S', 1500d, new EntityKirin.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum BLACKPANTHER = new ItemJutsu.JutsuEnum(5, "lightning_panther", 'S', 50d, new EntityLightningPanther.EC.Jutsu());
+	public static final ItemJutsu.JutsuEnum LIGHTNINGCLONE = new ItemJutsu.JutsuEnum(6, "lightning_clone", 'A', 95d, new ItemExtraJutsu.LightningCloneJutsu());
+	public static final ItemJutsu.JutsuEnum CHIDORISENBON = new ItemJutsu.JutsuEnum(7, "chidori_senbon", 'A', 60d, new ItemExtraJutsu.ChidoriSenbonJutsu());
 
 	public ItemRaiton(ElementsNarutomodMod instance) {
 		super(instance, 373);
@@ -58,7 +60,7 @@ public class ItemRaiton extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(CHIDORI, CHAKRAMODE, CHASINGDOG, GIAN, KIRIN, BLACKPANTHER));
+		elements.items.add(() -> new RangedItem(CHIDORI, CHAKRAMODE, CHASINGDOG, GIAN, KIRIN, BLACKPANTHER, LIGHTNINGCLONE, CHIDORISENBON));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityChakraMode.class)
 			.id(new ResourceLocation("narutomod", "raitonchakramode"), ENTITYID).name("raitonchakramode").tracker(64, 1, true).build());
 	}

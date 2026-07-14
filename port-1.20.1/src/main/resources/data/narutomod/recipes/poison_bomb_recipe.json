@@ -1,0 +1,18 @@
+{
+  "group": "narutomod",
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "narutomod:smoke_bomb"
+    },
+    {
+      "item": "minecraft:splash_potion",
+      "type": "minecraft:item_nbt",
+      "nbt": "{Potion:\"minecraft:strong_poison\"}"
+    }
+  ],
+  "result": {
+    "item": "narutomod:poisonbomb",
+    "count": 1
+  }
+}

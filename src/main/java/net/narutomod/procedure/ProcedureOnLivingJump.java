@@ -11,6 +11,7 @@ import net.minecraft.init.MobEffects;
 import net.minecraft.entity.player.EntityPlayer;
 
 import net.narutomod.ElementsNarutomodMod;
+import net.narutomod.PlayerStats;
 
 @ElementsNarutomodMod.ModElement.Tag
 public class ProcedureOnLivingJump extends ElementsNarutomodMod.ModElement {
@@ -41,14 +42,15 @@ public class ProcedureOnLivingJump extends ElementsNarutomodMod.ModElement {
 			entity.motionZ += Math.cos(yaw) * d0 * speed * 2.5d;
 			entity.motionY = Math.max(motionY * Math.sin(pitch) * 2.0d, 0.42d);
 		}
-		entity.addExhaustion(1.0f);
+		entity.addExhaustion(PlayerStats.isTaijutsuClan(entity) ? 0.35f : 1.0f);
 	}
 
 	@SubscribeEvent
 	public void lunge(LivingEvent.LivingJumpEvent event) {
 		if (event != null && event.getEntityLiving() instanceof EntityPlayer
 		 && event.getEntityLiving().isPotionActive(MobEffects.JUMP_BOOST) && ProcedureUtils.getModifiedSpeed(event.getEntityLiving()) >= 0.14d
-		 && event.getEntityLiving().isSneaking() && ((EntityPlayer)event.getEntityLiving()).getFoodStats().getFoodLevel() > 8.0f) {
+		 && event.getEntityLiving().isSneaking() && (((EntityPlayer)event.getEntityLiving()).getFoodStats().getFoodLevel() > 8.0f
+		  || (PlayerStats.isTaijutsuClan((EntityPlayer)event.getEntityLiving()) && ((EntityPlayer)event.getEntityLiving()).getFoodStats().getFoodLevel() > 2.0f))) {
 			lunge((EntityPlayer)event.getEntityLiving());
 		}
 	}

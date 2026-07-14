@@ -37,6 +37,11 @@ public class CommandAddNinjaXp extends ElementsNarutomodMod.ModElement {
 		}
 
 		@Override
+		public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+			return sender.canUseCommand(4, this.getName());
+		}
+
+		@Override
 		public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
 			if (args.length == 1) {
 				return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());

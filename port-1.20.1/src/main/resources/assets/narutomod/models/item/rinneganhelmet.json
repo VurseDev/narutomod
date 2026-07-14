@@ -1,0 +1,6 @@
+{
+  "parent": "narutomod:custom/rinnegan",
+  "textures": {
+    "1": "narutomod:blocks/rinnegan"
+  }
+}

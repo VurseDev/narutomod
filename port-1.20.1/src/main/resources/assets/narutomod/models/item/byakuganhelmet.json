@@ -1,0 +1,6 @@
+{
+  "parent": "narutomod:custom/byakugan",
+  "textures": {
+    "1": "narutomod:blocks/byakugan"
+  }
+}

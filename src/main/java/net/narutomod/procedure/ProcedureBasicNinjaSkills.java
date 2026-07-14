@@ -2,6 +2,7 @@ package net.narutomod.procedure;
 
 import net.narutomod.block.BlockMud;
 import net.narutomod.ElementsNarutomodMod;
+import net.narutomod.PlayerStats;
 
 import net.minecraft.world.World;
 import net.minecraft.util.math.RayTraceResult;
@@ -33,16 +34,17 @@ public class ProcedureBasicNinjaSkills extends ElementsNarutomodMod.ModElement {
 		Entity entity = (Entity) dependencies.get("entity");
 		World world = (World) dependencies.get("world");
 		boolean f1 = false;
+		boolean taijutsuClan = entity instanceof EntityPlayer && PlayerStats.isTaijutsuClan((EntityPlayer)entity);
 		if (((entity instanceof EntityPlayer) && ((EntityPlayer) entity).isSpectator())) {
 			return;
 		}
 		if ((!(world.isRemote))) {
 			if (entity instanceof EntityLivingBase)
-				((EntityLivingBase) entity).addPotionEffect(new PotionEffect(MobEffects.SPEED, (int) 2, (int) 1, (false), (false)));
+				((EntityLivingBase) entity).addPotionEffect(new PotionEffect(MobEffects.SPEED, (int) 2, taijutsuClan ? 2 : 1, (false), (false)));
 			if (entity instanceof EntityLivingBase)
-				((EntityLivingBase) entity).addPotionEffect(new PotionEffect(MobEffects.HASTE, (int) 2, (int) 1, (false), (false)));
+				((EntityLivingBase) entity).addPotionEffect(new PotionEffect(MobEffects.HASTE, (int) 2, taijutsuClan ? 2 : 1, (false), (false)));
 			if (entity instanceof EntityLivingBase)
-				((EntityLivingBase) entity).addPotionEffect(new PotionEffect(MobEffects.JUMP_BOOST, (int) 2, (int) 1, (false), (false)));
+				((EntityLivingBase) entity).addPotionEffect(new PotionEffect(MobEffects.JUMP_BOOST, (int) 2, taijutsuClan ? 2 : 1, (false), (false)));
 		}
 		if ((((world.getBlockState(new BlockPos((int) Math.floor((entity.posX)), (int) (entity.posY), (int) Math.floor((entity.posZ)))))
 				.getMaterial() == Material.WATER)
@@ -64,7 +66,7 @@ public class ProcedureBasicNinjaSkills extends ElementsNarutomodMod.ModElement {
 			} else {
 				if ((!((world.getBlockState(new BlockPos((int) Math.floor((entity.posX)), (int) (entity.posY), (int) Math.floor((entity.posZ)))))
 						.getBlock() == BlockMud.block.getDefaultState().getBlock()))) {
-					entity.motionY = 0.6d - (world.getBlockState(r.getBlockPos()).getBlock().slipperiness - 0.6) * 2;
+					entity.motionY = (taijutsuClan ? 0.75d : 0.6d) - (world.getBlockState(r.getBlockPos()).getBlock().slipperiness - 0.6) * 2;
 				}
 			}
 		}

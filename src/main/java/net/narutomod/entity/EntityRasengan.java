@@ -75,6 +75,7 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 
 	public static class EC extends EntityScalableProjectile.Base implements ProcedureSync.CPacketVec3d.IHandler, ItemJutsu.IJutsu {
 		private static final DataParameter<Integer> OWNER_ID = EntityDataManager.<Integer>createKey(EC.class, DataSerializers.VARINT);
+		private static final DataParameter<Boolean> FIRE_VARIANT = EntityDataManager.<Boolean>createKey(EC.class, DataSerializers.BOOLEAN);
 		private final int growTime = 30;
 		private float fullScale;
 		private Vec3d angles;
@@ -88,14 +89,27 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 		}
 
 		public EC(EntityLivingBase shooter, float scale) {
+			this(shooter, scale, false);
+		}
+
+		public EC(EntityLivingBase shooter, float scale, boolean fireVariantIn) {
 			super(shooter);
 			this.setOGSize(0.35F, 0.35F);
 			this.setEntityScale(0.1f);
 			this.setOwner(shooter);
 			this.setLocationAndAngles(shooter.posX, shooter.posY, shooter.posZ, 0.0f, 0.0f);
 			this.fullScale = scale;
+			this.setFireVariant(fireVariantIn);
 			this.isImmuneToFire = true;
 			this.damageSource = ItemJutsu.causeJutsuDamage(this, shooter);
+		}
+
+		public boolean isFireVariant() {
+			return ((Boolean)this.getDataManager().get(FIRE_VARIANT)).booleanValue();
+		}
+
+		private void setFireVariant(boolean fireVariantIn) {
+			this.getDataManager().set(FIRE_VARIANT, Boolean.valueOf(fireVariantIn));
 		}
 
 		@Override
@@ -107,6 +121,7 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 		protected void entityInit() {
 			super.entityInit();
 			this.getDataManager().register(OWNER_ID, Integer.valueOf(-1));
+			this.getDataManager().register(FIRE_VARIANT, Boolean.valueOf(false));
 		}
 
 		@Nullable
@@ -125,7 +140,11 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 			if (!this.world.isRemote) {
 				if (this.shootingEntity != null) {
 					ProcedureSync.EntityNBTTag.removeAndSync(this.shootingEntity, NarutomodModVariables.forceBowPose);
-					ItemNinjutsu.RASENGAN.jutsu.deactivate(this.shootingEntity);
+					if (this.isFireVariant()) {
+						ItemNinjutsu.FIRERASENGAN.jutsu.deactivate(this.shootingEntity);
+					} else {
+						ItemNinjutsu.RASENGAN.jutsu.deactivate(this.shootingEntity);
+					}
 				}
 			}
 		}
@@ -224,14 +243,18 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 			if (this.ticksAlive > this.growTime && this.shootingEntity != null
 			 && !entityIn.equals(this.shootingEntity) && !this.bunshinHasSameSummoner(entityIn)) {
 				if (entityIn.attackEntityFrom(this.damageSource, 10f + this.fullScale * this.fullScale * 20f)) {
+					if (this.isFireVariant()) {
+						entityIn.setFire(10);
+					}
 					this.playSound(SoundEvents.ENTITY_GENERIC_EXPLODE, 1.0F, this.rand.nextFloat() * 0.5F + 0.5F);
 					Vec3d vec = ProcedureUtils.pushEntity(this.shootingEntity, entityIn, 20d, 2f);
 					Vec3d vec1 = this.shootingEntity.getLookVec().add(this.shootingEntity.getPositionEyes(1.0f));
+					int color = this.isFireVariant() ? 0x80ff6a00 : 0x8029c5ff;
 					for (int i = 1; i <= 100; i++) {
 						double d = (double)i * vec.lengthVector() * 0.05d;
 						Vec3d vec2 = vec.normalize().scale(d);
 						Particles.spawnParticle(this.world, Particles.Types.WHIRLPOOL, vec1.x, vec1.y, vec1.z, 1,
-						 0d, 0d, 0d, vec2.x, vec2.y, vec2.z, 0x80b9fffd, (int)(d * 20), (int)d, 0xF0);
+						 0d, 0d, 0d, vec2.x, vec2.y, vec2.z, color, (int)(d * 20), (int)d, 0xF0);
 					}
 				}
 				this.setDead();
@@ -247,6 +270,7 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 		protected void readEntityFromNBT(NBTTagCompound compound) {
 			super.readEntityFromNBT(compound);
 			this.fullScale = compound.getFloat("fullScale");
+			this.setFireVariant(compound.getBoolean("fireVariant"));
 			this.damageSource = compound.getBoolean("isSenjutsu") ? ItemJutsu.causeSenjutsuDamage(this, this.getOwner())
 			 : ItemJutsu.causeJutsuDamage(this, this.getOwner());
 		}
@@ -255,6 +279,7 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 		protected void writeEntityToNBT(NBTTagCompound compound) {
 			super.writeEntityToNBT(compound);
 			compound.setFloat("fullScale", this.fullScale);
+			compound.setBoolean("fireVariant", this.isFireVariant());
 			compound.setBoolean("isSenjutsu", ItemJutsu.isDamageSourceSenjutsu(this.damageSource));
 		}
 
@@ -275,12 +300,13 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 		}*/
 
 		public static class Jutsu implements ItemJutsu.IJutsuCallback {
-			private static final String ID_KEY = "RasenganEntityId";
-			private static final String SIZE_KEY = "RasenganSize";
+			protected String getIdKey() { return "RasenganEntityId"; }
+			protected String getSizeKey() { return "RasenganSize"; }
+			protected boolean isFireVariant() { return false; }
 			
 			@Override
 			public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
-				Entity entity1 = stack.hasTagCompound() ? entity.world.getEntityByID(stack.getTagCompound().getInteger(ID_KEY)) : null;
+				Entity entity1 = stack.hasTagCompound() ? entity.world.getEntityByID(stack.getTagCompound().getInteger(this.getIdKey())) : null;
 				if (entity1 instanceof EC && entity instanceof EntityPlayer) {
 					entity1.setDead();
 				} else if ((stack.getItem() == ItemNinjutsu.block && power >= 0.5f)
@@ -289,17 +315,17 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 					if (stack.getItem() == ItemSenjutsu.block) {
 						entity2.damageSource = ItemJutsu.causeSenjutsuDamage(entity2, entity);
 					}
-					stack.getTagCompound().setInteger(ID_KEY, entity2.getEntityId());
-					stack.getTagCompound().setFloat(SIZE_KEY, power);
+					stack.getTagCompound().setInteger(this.getIdKey(), entity2.getEntityId());
+					stack.getTagCompound().setFloat(this.getSizeKey(), power);
 					return true;
 				}
 				return false;
 			}
 
-			public static EC createJutsu(EntityLivingBase entity, float power) {
+			public EC createJutsu(EntityLivingBase entity, float power) {
 				entity.world.playSound(null, entity.posX, entity.posY, entity.posZ, SoundEvent.REGISTRY
 				  .getObject(new ResourceLocation("narutomod:rasengan_start")), SoundCategory.NEUTRAL, 1.0F, 1.0F);
-				EC entity2 = new EC(entity, power);
+				EC entity2 = new EC(entity, power, this.isFireVariant());
 				entity.world.spawnEntity(entity2);
 				return entity2;
 			}
@@ -321,14 +347,14 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 					if (!jd.entity.isDead) {
 						jd.entity.setDead();
 					}
-					jd.stack.getTagCompound().removeTag(ID_KEY);
-					jd.stack.getTagCompound().removeTag(SIZE_KEY);
+					jd.stack.getTagCompound().removeTag(this.getIdKey());
+					jd.stack.getTagCompound().removeTag(this.getSizeKey());
 				}
 			}
 
 			@Override
 			public float getPower(ItemStack stack) {
-				return stack.hasTagCompound() ? stack.getTagCompound().getFloat(SIZE_KEY) : 0.0f;
+				return stack.hasTagCompound() ? stack.getTagCompound().getFloat(this.getSizeKey()) : 0.0f;
 			}
 
 			@Override
@@ -358,12 +384,18 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 			@Override @Nullable
 			public ItemJutsu.IJutsuCallback.JutsuData getData(EntityLivingBase entity) {
 				ItemStack stack = ProcedureUtils.getMatchingItemStack(entity, ItemNinjutsu.block);
-				if (stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey(ID_KEY)) {
-					Entity entity1 = entity.world.getEntityByID(stack.getTagCompound().getInteger(ID_KEY));
+				if (stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey(this.getIdKey())) {
+					Entity entity1 = entity.world.getEntityByID(stack.getTagCompound().getInteger(this.getIdKey()));
 					return entity1 instanceof EC ? new JutsuData(entity1, stack) : null;
 				}
 				return null;
 			}
+		}
+
+		public static class FireJutsu extends Jutsu {
+			@Override protected String getIdKey() { return "FireRasenganEntityId"; }
+			@Override protected String getSizeKey() { return "FireRasenganSize"; }
+			@Override protected boolean isFireVariant() { return true; }
 		}
 
 		public static class SageModeVariant extends Jutsu {			
@@ -473,7 +505,7 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 			            GlStateManager.translate(-0.125F, entity.height - 0.025F, 0.0F);
 			            alpha = 0.34F;
 		            } else {
-						this.renderParticles(entity.world, ballVec.addVector(0.0d, entity.height/2, 0.0d), scale);
+						this.renderParticles(entity.world, ballVec.addVector(0.0d, entity.height/2, 0.0d), scale, entity.isFireVariant());
 						x = owner.lastTickPosX + (owner.posX - owner.lastTickPosX) * partialTicks - this.renderManager.viewerPosX;
 						y = owner.lastTickPosY + (owner.posY - owner.lastTickPosY) * partialTicks - this.renderManager.viewerPosY;
 						z = owner.lastTickPosZ + (owner.posZ - owner.lastTickPosZ) * partialTicks - this.renderManager.viewerPosZ;
@@ -502,7 +534,11 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 					GlStateManager.rotate(f1 * 60.0F, 0.0F, 1.0F, 0.0F);
 					float f2 = 1F - (float)i / 27F;
 					GlStateManager.scale(f2, f2, f2);
-					GlStateManager.color(0.66F + 0.34F * i / 9, 0.87F + 0.13F * i / 9, 1.0F, 0.3F * alpha);
+					if (entity.isFireVariant()) {
+						GlStateManager.color(1.0F, 0.31F + 0.32F * i / 9, 0.02F, 0.3F * alpha);
+					} else {
+						GlStateManager.color(0.08F, 0.55F + 0.25F * i / 9, 1.0F, 0.3F * alpha);
+					}
 					this.mainModel.render(entity, 0.0F, 0.0F, f1, 0.0F, 0.0F, 0.0625F);
 					GlStateManager.popMatrix();
 				}
@@ -523,11 +559,12 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 				model.bipedRightArm.rotateAngleX = -((float)Math.PI / 2F) + f7;
 			}
 	
-			private void renderParticles(World worldIn, Vec3d vec, float size) {
+			private void renderParticles(World worldIn, Vec3d vec, float size, boolean fireVariant) {
 				for (int i = 0; i < 10; i++) {
+					int color = fireVariant ? 0x30FF6A00 : 0x3029C5FF;
 					Particles.spawnParticle(worldIn, Particles.Types.SMOKE, vec.x, vec.y, vec.z,
 					 1, 0d, 0.02d, 0d, 0.2d * worldIn.rand.nextGaussian(), 0.2d * worldIn.rand.nextGaussian(), 
-					 0.2d * worldIn.rand.nextGaussian(), 0x10FFFFFF, (int)(size * 5), 0);
+					 0.2d * worldIn.rand.nextGaussian(), color, (int)(size * 5), 0);
 				}
 			}
 	

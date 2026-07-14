@@ -1,0 +1,6 @@
+{
+  "parent": "narutomod:custom/mangekyo_eternal",
+  "textures": {
+    "1": "narutomod:blocks/mangekyosharingan_eterna"
+  }
+}

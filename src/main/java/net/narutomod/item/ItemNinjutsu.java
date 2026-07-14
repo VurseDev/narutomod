@@ -31,10 +31,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
 import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.Entity;
@@ -48,6 +50,7 @@ import net.narutomod.entity.*;
 import net.narutomod.procedure.ProcedureUtils;
 import net.narutomod.procedure.ProcedureOnLivingUpdate;
 import net.narutomod.procedure.ProcedureOnLeftClickEmpty;
+import net.narutomod.procedure.ProcedureSync;
 import net.narutomod.potion.PotionParalysis;
 import net.narutomod.Chakra;
 
@@ -70,8 +73,15 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum INVISABILITY = new ItemJutsu.JutsuEnum(7, "tooltip.ninjutsu.hidingincamouflage", 'A', 100d, new HidingWithCamouflage());
 	public static final ItemJutsu.JutsuEnum TRANSFORM = new ItemJutsu.JutsuEnum(8, "transformation_jutsu", 'D', 50d, new EntityTransformationJutsu.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum HIRAISHIN = new ItemJutsu.JutsuEnum(9, "hiraishin", 'S', 10d, new EntityHiraishin.EC.Jutsu());
-	public static final ItemJutsu.JutsuEnum SHIKIGAMI = new ItemJutsu.JutsuEnum(10, "shikigami", 'B', 50d, new EntityShikigami.EC.Jutsu());
+	public static final ItemJutsu.JutsuEnum SHIKIGAMI = new ItemJutsu.JutsuEnum(10, "shikigami", 'B', 50d, new EntityShikigami.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum MULTICLONE = new ItemJutsu.JutsuEnum(11, "kage_bunshin_multi", 'A', new EntityKageBunshin.EC.Jutsu2());
+	public static final ItemJutsu.JutsuEnum CROWCLONE = new ItemJutsu.JutsuEnum(12, "crow_clone", 'C', 1250, 55d, new ItemExtraJutsu.CrowCloneJutsu());
+	public static final ItemJutsu.JutsuEnum CROWTRAPCLONE = new ItemJutsu.JutsuEnum(13, "crow_trap_clone", 'C', 70d, new ItemExtraJutsu.CrowTrapCloneJutsu());
+	public static final ItemJutsu.JutsuEnum EXPLOSIVECLONE = new ItemJutsu.JutsuEnum(14, "explosive_clone", 'B', 140d, new ItemExtraJutsu.ExplosiveCloneJutsu());
+	public static final ItemJutsu.JutsuEnum SHURIKENSHADOWCLONE = new ItemJutsu.JutsuEnum(15, "shuriken_shadow_clone", 'B', 55d, new ItemExtraJutsu.ShurikenShadowCloneJutsu());
+	public static final ItemJutsu.JutsuEnum FIRERASENGAN = new ItemJutsu.JutsuEnum(16, "fire_rasengan", 'A', 150d, new EntityRasengan.EC.FireJutsu());
+	public static final ItemJutsu.JutsuEnum SENSORIAL = new ItemJutsu.JutsuEnum(17, "sensorial_jutsu", 'S', 95d, new SensorialJutsu());
+	public static final ItemJutsu.JutsuEnum CHAKRAPULSE = new ItemJutsu.JutsuEnum(18, "chakra_pulse", 'D', 0, 35d, new ChakraPulse());
 
 	public ItemNinjutsu(ElementsNarutomodMod instance) {
 		super(instance, 377);
@@ -79,7 +89,7 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 	
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(REPLACEMENT, KAGEBUNSHIN, RASENGAN, LIMBOCLONE, AMENOTEJIKARA, PUPPET, BUGSWARM, INVISABILITY, TRANSFORM, HIRAISHIN, SHIKIGAMI, MULTICLONE));
+		elements.items.add(() -> new RangedItem(REPLACEMENT, KAGEBUNSHIN, RASENGAN, LIMBOCLONE, AMENOTEJIKARA, PUPPET, BUGSWARM, INVISABILITY, TRANSFORM, HIRAISHIN, SHIKIGAMI, MULTICLONE, CROWCLONE, CROWTRAPCLONE, EXPLOSIVECLONE, SHURIKENSHADOWCLONE, FIRERASENGAN, SENSORIAL, CHAKRAPULSE));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityReplacementClone.class)
 			.id(new ResourceLocation("narutomod", "replacementclone"), ENTITYID).name("replacementclone")
 			.tracker(64, 1, true).build());
@@ -93,6 +103,26 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 
 	public static boolean isJutsuEnabled(@Nullable ItemStack stack, ItemJutsu.JutsuEnum jutsu) {
 		return stack != null && stack.getItem() == block && ((RangedItem)stack.getItem()).isJutsuEnabled(stack, jutsu);
+	}
+
+	public static class ChakraPulse implements ItemJutsu.IJutsuCallback {
+		@Override
+		public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
+			if (!(entity instanceof EntityPlayer)) return false;
+			EntityPlayer player = (EntityPlayer)entity;
+			if (ItemInton.chakraPulseBreak(player)) {
+				for (int i = 0; i < 80; i++) {
+					double dx = (entity.getRNG().nextDouble() - 0.5d) * 1.8d;
+					double dy = entity.getRNG().nextDouble() * 1.8d;
+					double dz = (entity.getRNG().nextDouble() - 0.5d) * 1.8d;
+					entity.world.spawnParticle(EnumParticleTypes.SPELL_INSTANT, entity.posX + dx, entity.posY + dy, entity.posZ + dz, dx * 0.08d, 0.03d, dz * 0.08d);
+				}
+				ItemJutsu.setCurrentJutsuCooldown(stack, entity, 200);
+				return true;
+			}
+			ItemJutsu.setCurrentJutsuCooldown(stack, entity, 80);
+			return false;
+		}
 	}
 
 	public static ItemJutsu.JutsuEnum getCurrentJutsu(ItemStack stack) {
@@ -120,6 +150,9 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 		@Override
 		public void onUpdate(ItemStack itemstack, World world, Entity entity, int par4, boolean par5) {
 			super.onUpdate(itemstack, world, entity, par4, par5);
+			if (!world.isRemote && entity instanceof EntityPlayer && !this.isJutsuEnabled(itemstack, CHAKRAPULSE)) {
+				this.enableJutsu(itemstack, CHAKRAPULSE, true);
+			}
 			if (!world.isRemote && entity.ticksExisted % 20 == 0
 			 && entity instanceof EntityLivingBase && INVISABILITY.jutsu.isActivated(itemstack)) {
 				if (Chakra.pathway((EntityLivingBase)entity).consume(INVISABILITY.chakraUsage * 0.2d)) {
@@ -302,6 +335,39 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 				}
 			}
 		}
+	}
+
+	public static class SensorialJutsu implements ItemJutsu.IJutsuCallback {
+		@Override
+		public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
+			if (!(entity instanceof EntityPlayerMP) || entity.world.isRemote) {
+				return false;
+			}
+			EntityPlayerMP player = (EntityPlayerMP)entity;
+			float charge = MathHelper.clamp(power, 0.0f, 1.0f);
+			int range = MathHelper.clamp(150 + MathHelper.floor(350f * charge), 150, 500);
+			int found = 0;
+			player.sendMessage(new TextComponentString(TextFormatting.AQUA + "Sensorial scan range: " + range + " blocks"));
+			for (EntityPlayer target : entity.world.playerEntities) {
+				if (target == player || target.isSpectator() || !target.isEntityAlive()) {
+					continue;
+				}
+				if (target.getDistance(player) <= range) {
+					found++;
+					ProcedureSync.SetGlowing.send(player, target, 60);
+					player.sendMessage(new TextComponentString(TextFormatting.YELLOW + target.getName() + TextFormatting.GRAY
+					 + " -> X: " + MathHelper.floor(target.posX) + " Y: " + MathHelper.floor(target.posY) + " Z: " + MathHelper.floor(target.posZ)));
+				}
+			}
+			if (found == 0) {
+				player.sendMessage(new TextComponentString(TextFormatting.GRAY + "No players detected."));
+			}
+			return true;
+		}
+
+		@Override public float getBasePower() { return 0.0f; }
+		@Override public float getPowerupDelay() { return 80.0f; }
+		@Override public float getMaxPower() { return 1.0f; }
 	}
 
 	public static class Amenotejikara implements ItemJutsu.IJutsuCallback {

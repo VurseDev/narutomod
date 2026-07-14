@@ -39,6 +39,8 @@ import net.narutomod.procedure.ProcedureUpdateworldtick;
 import net.narutomod.Chakra;
 import net.narutomod.Particles;
 import net.narutomod.PlayerTracker;
+import net.narutomod.PlayerStats;
+import net.narutomod.ElementalTraining;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -127,7 +129,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		if (stack.getItem() instanceof Base) {
 			Base baseitem = (Base)stack.getItem();
 			if (baseitem.getCurrentJutsuXp(stack) < baseitem.getCurrentJutsuRequiredXp(stack)) {
-				baseitem.addCurrentJutsuXp(stack, 1);
+				baseitem.addCurrentJutsuXp(stack, PlayerStats.hasAffinity(player, baseitem.getCurrentJutsu(stack).getType()) ? 2 : 1);
 			}
 		}
 	}
@@ -147,7 +149,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static double getMaxPower(EntityLivingBase entity, double jutsuCkakraUsage) {
-		return Chakra.pathway(entity).getAmount() / jutsuCkakraUsage * 0.9999d;
+		return jutsuCkakraUsage > 0d ? Chakra.pathway(entity).getAmount() / jutsuCkakraUsage : Double.MAX_VALUE;
 	}
 	
 	public abstract static class Base extends Item {
@@ -181,9 +183,23 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 
 		protected boolean executeJutsu(ItemStack stack, EntityLivingBase entity, float power) {
 			JutsuEnum jutsuEnum = this.getCurrentJutsu(stack);
+			if (entity instanceof EntityPlayer && !((EntityPlayer)entity).isCreative()
+			 && !ElementalTraining.isElementUnlocked((EntityPlayer)entity, jutsuEnum.getType())) {
+				((EntityPlayer)entity).sendStatusMessage(new TextComponentTranslation("message.narutomod.element_training.locked", ElementalTraining.getElementName(jutsuEnum.getType())), true);
+				return false;
+			}
+			if (!this.canSpendCurrentResource(entity, jutsuEnum)) {
+				return false;
+			}
+			if (!ItemByakugan.canUseJutsuUnderTenketsu(entity, jutsuEnum)) {
+				Chakra.pathway(entity).warningDisplay();
+				return false;
+			}
 			Chakra.Pathway pw = Chakra.pathway(entity);
-			double d = jutsuEnum.chakraUsage * power;
+			double d = Math.max(this.getMinimumResourceCost(stack, entity, jutsuEnum),
+			 jutsuEnum.chakraUsage * power * this.getMasteryChakraCostModifier(stack, entity) * ItemByakugan.getTenketsuCostMultiplier(entity));
 			if (power <= 0f || pw.getAmount() < d) {
+				pw.warningDisplay();
 				return false;
 			}
 			if (jutsuEnum.jutsu.createJutsu(stack, entity, power)) {
@@ -191,6 +207,25 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 				return true;
 			}
 			return false;
+		}
+
+		private boolean canSpendCurrentResource(EntityLivingBase entity, JutsuEnum jutsuEnum) {
+			if (entity instanceof EntityPlayer) {
+				boolean staminaMode = Chakra.isStaminaMode((EntityPlayer)entity);
+				boolean taijutsu = jutsuEnum.getType() == JutsuEnum.Type.TAIJUTSU;
+				return staminaMode == taijutsu;
+			}
+			return jutsuEnum.getType() != JutsuEnum.Type.TAIJUTSU;
+		}
+
+		private double getMinimumResourceCost(ItemStack stack, EntityLivingBase entity, JutsuEnum jutsuEnum) {
+			return jutsuEnum.chakraUsage > 0d
+			 ? jutsuEnum.chakraUsage * this.getMasteryChakraCostModifier(stack, entity) * ItemByakugan.getTenketsuCostMultiplier(entity) : 0d;
+		}
+
+		private double getMasteryChakraCostModifier(ItemStack stack, EntityLivingBase entity) {
+			float xpModifier = MathHelper.clamp(this.getCurrentJutsuXpModifier(stack, entity), 0.3334f, 1.0f);
+			return 0.70d + 0.30d * (double)xpModifier;
 		}
 
 		public float getPower(ItemStack stack, EntityLivingBase entity, int timeLeft) {
@@ -217,7 +252,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		public float getMaxPower(ItemStack stack, EntityLivingBase entity) {
 			//return (float)ItemJutsu.getMaxPower(entity, this.getCurrentJutsu(stack).chakraUsage);
 			JutsuEnum jutsuEnum = this.getCurrentJutsu(stack);
-			float mp = (float)ItemJutsu.getMaxPower(entity, jutsuEnum.chakraUsage);
+			float mp = jutsuEnum.chakraUsage > 0d ? (float)ItemJutsu.getMaxPower(entity, jutsuEnum.chakraUsage) : jutsuEnum.jutsu.getMaxPower(stack, entity);
 			return Math.min(mp, jutsuEnum.jutsu.getMaxPower(stack, entity));
 		}
 
@@ -231,7 +266,11 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		@Override
 		public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityLivingBase entity, int timeLeft) {
 			if (!world.isRemote && this.executeJutsu(itemstack, entity, this.getPower(itemstack, entity, timeLeft))) {
-				this.addCurrentJutsuXp(itemstack, 1);
+				if (entity instanceof EntityPlayer) {
+					ItemSharinganCopy.recordJutsuUse((EntityPlayer)entity, itemstack, this.getCurrentJutsu(itemstack));
+				}
+				this.addCurrentJutsuXp(itemstack,
+				 entity instanceof EntityPlayer && PlayerStats.hasAffinity((EntityPlayer)entity, this.getCurrentJutsu(itemstack).getType()) ? 2 : 1);
 				if (entity instanceof EntityPlayer) {
 					((EntityPlayer)entity).addExhaustion(0.4f);
 				}
@@ -559,8 +598,23 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 				if (!this.jutsuList.contains(jutsuIn) || !this.canUseJutsu(stack, jutsuIn.index, entity)) {
 					return EnumActionResult.FAIL;
 				}
+				if (!ElementalTraining.isElementUnlocked(entity, jutsuIn.getType())) {
+					entity.sendStatusMessage(new TextComponentTranslation("message.narutomod.element_training.locked", ElementalTraining.getElementName(jutsuIn.getType())), true);
+					return EnumActionResult.FAIL;
+				}
 				if (this.getJutsuXp(stack, jutsuIn.index) < this.getRequiredXp(stack, jutsuIn.index)
 				 || !PlayerTracker.isNinja(entity)) {
+					return EnumActionResult.FAIL;
+				}
+				if (!this.canSpendCurrentResource(entity, jutsuIn)) {
+					return EnumActionResult.FAIL;
+				}
+				if (!ItemByakugan.canUseJutsuUnderTenketsu(entity, jutsuIn)) {
+					Chakra.pathway(entity).warningDisplay();
+					return EnumActionResult.FAIL;
+				}
+				if (Chakra.pathway(entity).getAmount() < this.getMinimumResourceCost(stack, entity, jutsuIn)) {
+					Chakra.pathway(entity).warningDisplay();
 					return EnumActionResult.FAIL;
 				}
 				long cd = this.getJutsuCooldown(stack, jutsuIn.index);
@@ -765,6 +819,8 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		}
 
 		public enum Type {
+			TAIJUTSU,
+			INUZUKA,
 			NINJUTSU,
 			DOTON,
 			FUTON,

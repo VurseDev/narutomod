@@ -1,0 +1,6 @@
+{
+  "parent": "narutomod:custom/mangekyo_amaterasu",
+  "textures": {
+    "1": "narutomod:blocks/mangekyosharingan_sasuke"
+  }
+}

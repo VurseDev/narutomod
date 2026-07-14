@@ -1,0 +1,16 @@
+{
+  "group": "narutomod",
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "narutomod:kunai"
+    },
+    {
+      "item": "narutomod:explosive_tag"
+    }
+  ],
+  "result": {
+    "item": "narutomod:kunai_explosive",
+    "count": 1
+  }
+}

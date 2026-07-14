@@ -28,6 +28,7 @@ import net.minecraft.init.MobEffects;
 import net.narutomod.procedure.ProcedureUtils;
 import net.narutomod.entity.EntityNinjaMob;
 import net.narutomod.gui.overlay.OverlayChakraDisplay;
+import net.narutomod.item.ItemByakugan;
 
 import java.util.Random;
 import java.util.Map;
@@ -63,6 +64,13 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 
 	public static double getChakraModifier(EntityLivingBase entity) {
 		return ProcedureUtils.getCDModifier(getLevel(entity));
+	}
+
+	public static boolean isStaminaMode(EntityPlayer player) {
+		if (player.world.isRemote) {
+			return clientPlayerPathway != null && clientPlayerPathway.user == player && clientPlayerPathway.staminaMode;
+		}
+		return PlayerStats.isTaijutsuTrained(player);
 	}
 	
 	public static Pathway pathway(EntityLivingBase user) {
@@ -178,6 +186,7 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 	
 	public static class PathwayPlayer extends Pathway<EntityPlayer> {
 		private boolean forceSync;
+		private boolean staminaMode;
 		private int motionlessTime;
 		private double prevX;
 		private double prevZ;
@@ -204,13 +213,17 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 
 		private void sendToClient() {
 			if (this.user instanceof EntityPlayerMP) {
-				ServerMessage.sendToSelf((EntityPlayerMP)this.user, this.getAmount(), this.getMax());
+				ServerMessage.sendToSelf((EntityPlayerMP)this.user, this.getAmount(), this.getMax(), Chakra.isStaminaMode(this.user));
 			}
 		}
 
 		@Override
 		protected void resetMax() {
-			this.setMax(PlayerTracker.getBattleXp(this.user) * 0.5d);
+			if (Chakra.isStaminaMode(this.user)) {
+				this.setMax(PlayerTracker.getBattleXp(this.user) * 0.35d + 120d + PlayerStats.getStaminaBonus(this.user));
+			} else {
+				this.setMax(PlayerTracker.getBattleXp(this.user) * 0.5d + PlayerStats.getChakraBonus(this.user));
+			}
 		}
 
 		@Override
@@ -244,11 +257,19 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 			 	this.motionlessTime = 0;
 			}
 			if (this.motionlessTime > 80) {
-				this.consume(-ModConfig.CHAKRA_REGEN_RATE - 0.001f * this.user.getFoodStats().getSaturationLevel());
+				if (PlayerStats.canRegenerateChakra(this.user)) {
+					double regen = Chakra.isStaminaMode(this.user) ? ModConfig.CHAKRA_REGEN_RATE * 1.35d : ModConfig.CHAKRA_REGEN_RATE;
+					double totalRegen = (regen + PlayerStats.getSpiRegenBonus(this.user)
+					 + 0.001f * this.user.getFoodStats().getSaturationLevel()) * ItemByakugan.getTenketsuRegenMultiplier(this.user);
+					this.consume(-totalRegen);
+				}
 			}
-			double d = PlayerTracker.getBattleXp(this.user) * 0.5d;
-			if (d != this.getMax() || this.forceSync) {
+			boolean stamina = Chakra.isStaminaMode(this.user);
+			double d = stamina ? PlayerTracker.getBattleXp(this.user) * 0.35d + 120d + PlayerStats.getStaminaBonus(this.user)
+			 : PlayerTracker.getBattleXp(this.user) * 0.5d + PlayerStats.getChakraBonus(this.user);
+			if (d != this.getMax() || stamina != this.staminaMode || this.forceSync) {
 				this.forceSync = false;
+				this.staminaMode = stamina;
 				this.setMax(d);
 				this.sendToClient();
 			}
@@ -331,17 +352,19 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 			//int id;
 			double amount;
 			double max;
+			boolean staminaMode;
 	
 			public ServerMessage() { }
 	
-			public ServerMessage(double amountIn, double maxIn) {
+			public ServerMessage(double amountIn, double maxIn, boolean staminaModeIn) {
 				//this.id = pathway.player.getEntityId();
 				this.amount = amountIn;
 				this.max = maxIn;
+				this.staminaMode = staminaModeIn;
 			}
 
-			public static void sendToSelf(EntityPlayerMP player, double d1, double d2) {
-				NarutomodMod.PACKET_HANDLER.sendTo(new ServerMessage(d1, d2), player);
+			public static void sendToSelf(EntityPlayerMP player, double d1, double d2, boolean staminaModeIn) {
+				NarutomodMod.PACKET_HANDLER.sendTo(new ServerMessage(d1, d2, staminaModeIn), player);
 			}
 	
 			public static class Handler implements IMessageHandler<ServerMessage, IMessage> {
@@ -351,7 +374,9 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 					Minecraft.getMinecraft().addScheduledTask(() -> {
 						EntityPlayer player = Minecraft.getMinecraft().player;
 						if (player != null) {
-							pathway(player).setMax(message.max).set(message.amount);
+							PathwayPlayer pathway = pathway(player);
+							pathway.staminaMode = message.staminaMode;
+							pathway.setMax(message.max).set(message.amount);
 						}
 					});
 					return null;
@@ -362,12 +387,14 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 				//buf.writeInt(this.id);
 				buf.writeDouble(this.amount);
 				buf.writeDouble(this.max);
+				buf.writeBoolean(this.staminaMode);
 			}
 	
 			public void fromBytes(ByteBuf buf) {
 				//this.id = buf.readInt();
 				this.amount = buf.readDouble();
 				this.max = buf.readDouble();
+				this.staminaMode = buf.readBoolean();
 			}
 		}
 

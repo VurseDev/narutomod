@@ -1,0 +1,6 @@
+{
+  "parent": "narutomod:custom/asuracanon",
+  "textures": {
+    "1": "narutomod:blocks/asura_canon"
+  }
+}

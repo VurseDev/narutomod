@@ -1,6 +1,7 @@
 package net.narutomod.procedure;
 
 import net.narutomod.item.ItemJutsu;
+import net.narutomod.item.ItemSharinganCopy;
 import net.narutomod.item.ItemEightGates;
 import net.narutomod.entity.EntityBijuManager;
 import net.narutomod.ElementsNarutomodMod;
@@ -81,6 +82,11 @@ public class ProcedureAddXP2JutsuCommandExecuted extends ElementsNarutomodMod.Mo
 				ItemEightGates.addBattleXP((EntityPlayer) entity, (int) xp2add);
 			} else if (itemoffhand.getItem() instanceof ItemJutsu.Base) {
 				ItemJutsu.addBattleXP((EntityPlayer) entity, (int) xp2add);
+			} else {
+				ItemStack helmet = ((EntityPlayer)entity).getItemStackFromSlot(net.minecraft.inventory.EntityEquipmentSlot.HEAD);
+				if (helmet.getItem() == net.narutomod.item.ItemSharinganTomoe3.helmet) {
+					ItemSharinganCopy.addCopyXp(helmet, (int)xp2add);
+				}
 			}
 		} else {
 			if (entity instanceof EntityPlayer && !entity.world.isRemote) {

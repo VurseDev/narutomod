@@ -134,7 +134,10 @@ public class OverlayChakraDisplay extends ElementsNarutomodMod.ModElement {
 				if (PlayerTracker.isNinja(mc.player) && Chakra.isInitialized(mc.player)) {
 					int sWidth = event.getResolution().getScaledWidth();
 					int sHeight = event.getResolution().getScaledHeight();
-					int color = (instance.warningTime % 10 < 5) ? 0xFF00FFFF : 0xFFFF0000;
+					boolean staminaMode = Chakra.isStaminaMode(mc.player);
+					int color = staminaMode ? ((instance.warningTime % 10 < 5) ? 0xFFFFD21F : 0xFFFF0000)
+					 : (instance.warningTime % 10 < 5) ? 0xFF00FFFF : 0xFFFF0000;
+					int fillColor = staminaMode ? 0xFFFFD21F : 0xFFFFFF00;
 					Chakra.Pathway p = Chakra.pathway(mc.player);
 					double d = p.getAmount() / p.getMax();
 					double d1 = d - Math.floor(d);
@@ -151,9 +154,9 @@ public class OverlayChakraDisplay extends ElementsNarutomodMod.ModElement {
 					}
 					GuiIngame.drawRect(left - 1, bartop - 1, left + w + 1, sHeight - 5, 0xFF202020);
 					for (int i = bartop; i <= sHeight - 9; i += 4) {
-						GuiIngame.drawRect(left, i, left + (int)((i == bartop ? d1 : 1d) * w), i + 3, (i == sHeight - 9) ? color : 0xFFFFFF00);
+						GuiIngame.drawRect(left, i, left + (int)((i == bartop ? d1 : 1d) * w), i + 3, (i == sHeight - 9) ? color : fillColor);
 					}
-					String chakraText = String.format("%d/%d", (int)p.getAmount(), (int)p.getMax());
+					String chakraText = String.format(staminaMode ? "STA %d/%d" : "%d/%d", (int)p.getAmount(), (int)p.getMax());
 					int chakraTextLen = mc.fontRenderer.getStringWidth(chakraText);
 					mc.fontRenderer.drawStringWithShadow(chakraText, left + (80 / 2) - chakraTextLen / 2, bartop - 10, color);
 					if (instance.warningTime > 0 && mc.player.ticksExisted > this.lastPlayerUpdate) {
