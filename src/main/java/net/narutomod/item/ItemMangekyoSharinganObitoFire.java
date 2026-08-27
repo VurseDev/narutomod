@@ -9,12 +9,14 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
 
 import net.minecraft.world.World;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.Item;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.util.text.translation.I18n;
@@ -92,16 +94,34 @@ public class ItemMangekyoSharinganObitoFire extends ElementsNarutomodMod.ModElem
 				if (isPressed || entity.world.isRemote) {
 					return true;
 				}
+				String cooldownKey = "CustomFireJutsuCooldown" + jutsu.index;
+				long worldTime = entity.world.getTotalWorldTime();
+				long cooldownExpiry = stack.hasTagCompound() ? stack.getTagCompound().getLong(cooldownKey) : 0L;
+				if (!entity.isCreative() && cooldownExpiry > worldTime) {
+					entity.sendStatusMessage(new TextComponentTranslation("chattext.cooldown.formatted",
+					 (cooldownExpiry - worldTime + 19L) / 20L), true);
+					return true;
+				}
 				float power = jutsu == ItemKaton.HIDINGINASH ? HIDING_IN_ASH_FULL_POWER : jutsu.jutsu.getMaxPower(stack, entity);
-				double chakraCost = jutsu.chakraUsage * power;
+				float mastery = ItemJutsu.getJutsuMastery(stack, jutsu, entity);
+				double chakraCost = ItemJutsu.getCustomResourceCost(jutsu.chakraUsage, jutsu.rank, entity, power, mastery);
 				if (!entity.isCreative()) {
 					Chakra.Pathway pathway = Chakra.pathway(entity);
 					if (pathway.getAmount() < chakraCost) {
+						pathway.warningDisplay();
 						return true;
 					}
-					pathway.consume(chakraCost);
 				}
-				jutsu.jutsu.createJutsu(stack, entity, power);
+				if (jutsu.jutsu.createJutsu(stack, entity, power)) {
+					CustomJutsuEffects.onCast(jutsu, entity, power);
+					if (!entity.isCreative()) {
+						Chakra.pathway(entity).consume(chakraCost);
+					}
+					if (!stack.hasTagCompound()) {
+						stack.setTagCompound(new NBTTagCompound());
+					}
+					stack.getTagCompound().setLong(cooldownKey, worldTime + ItemJutsu.getCustomCooldownTicks(jutsu.rank));
+				}
 				return true;
 			}
 		}.setUnlocalizedName("mangekyosharinganobitofirehelmet").setRegistryName("mangekyosharinganobitofirehelmet").setCreativeTab(TabCustomTabs.eyes));

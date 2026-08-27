@@ -66,7 +66,9 @@ public class ItemDoton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum SWAMPPIT = new ItemJutsu.JutsuEnum(3, "swamp_pit", 'A', 100d, new EntitySwampPit.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum SPEARS = new ItemJutsu.JutsuEnum(4, "earth_spears", 'C', 20d, new EntityEarthSpears.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum GOLEM = new ItemJutsu.JutsuEnum(5, "earth_golem", 'B', 100d, new EntityEarthGolem.EC.Jutsu());
-	public static final ItemJutsu.JutsuEnum RETSUDOTENSHO = new ItemJutsu.JutsuEnum(6, "retsudo_tensho", 'C', 55d, new ItemExtraJutsu.RetsudoTenshoJutsu());
+	public static final ItemJutsu.JutsuEnum RETSUDOTENSHO = new ItemJutsu.JutsuEnum(6, "retsudo_tensho", 'C', 55d, new ItemExtraJutsu.RetsudoTenshoJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum MUDWOLVES = new ItemJutsu.JutsuEnum(7, "mud_wolves", 'B', 90d, new ItemCanonicalJutsu.MudWolves()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum EARTHFLOWWAVE = new ItemJutsu.JutsuEnum(8, "earth_flow_wave", 'C', 65d, new ItemCanonicalJutsu.EarthFlowWave()).withCustomBalance();
 
 	public ItemDoton(ElementsNarutomodMod instance) {
 		super(instance, 378);
@@ -74,7 +76,7 @@ public class ItemDoton extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(HIDINGINROCK, EARTHWALL, SANDWICH, SWAMPPIT, SPEARS, GOLEM, RETSUDOTENSHO));
+		elements.items.add(() -> new RangedItem(HIDINGINROCK, EARTHWALL, SANDWICH, SWAMPPIT, SPEARS, GOLEM, RETSUDOTENSHO, MUDWOLVES, EARTHFLOWWAVE));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityEarthWall.class)
 				.id(new ResourceLocation("narutomod", "entityearthwall"), ENTITYID).name("entityearthwall").tracker(64, 1, true).build());
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityHidingInRock.class)

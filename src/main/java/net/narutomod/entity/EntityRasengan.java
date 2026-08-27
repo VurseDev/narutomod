@@ -48,6 +48,7 @@ import net.narutomod.procedure.ProcedureSync;
 import net.narutomod.item.ItemSenjutsu;
 import net.narutomod.item.ItemNinjutsu;
 import net.narutomod.item.ItemJutsu;
+import net.narutomod.item.CustomJutsuEffects;
 
 import java.util.List;
 import java.util.Random;
@@ -255,6 +256,10 @@ public class EntityRasengan extends ElementsNarutomodMod.ModElement {
 						Vec3d vec2 = vec.normalize().scale(d);
 						Particles.spawnParticle(this.world, Particles.Types.WHIRLPOOL, vec1.x, vec1.y, vec1.z, 1,
 						 0d, 0d, 0d, vec2.x, vec2.y, vec2.z, color, (int)(d * 20), (int)d, 0xF0);
+					}
+					if (this.isFireVariant()) {
+						CustomJutsuEffects.impact(this.world, entityIn.getPositionVector().addVector(0d, entityIn.height * 0.5d, 0d),
+						 0xB8FF5A00, Math.max(2.5f, this.fullScale * 2.2f), 12, 3.0f);
 					}
 				}
 				this.setDead();

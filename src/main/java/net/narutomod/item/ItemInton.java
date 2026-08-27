@@ -56,11 +56,11 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum GENJUTSU = new ItemJutsu.JutsuEnum(0, "genjutsu", 'B', 300d, new Genjutsu());
 	public static final ItemJutsu.JutsuEnum MBTRANSFER = new ItemJutsu.JutsuEnum(1, "mind_transfer", 'C', 300d, new EntityMindTransfer.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum SHADOW_IMITATION = new ItemJutsu.JutsuEnum(2, "shadow_imitation", 'B', 50d, new EntityShadowImitation.EC.Jutsu());
-	public static final ItemJutsu.JutsuEnum FALSE_OPENING = new ItemJutsu.JutsuEnum(3, "false_opening", 'C', 80d, new FalseOpening());
-	public static final ItemJutsu.JutsuEnum MEMORY_FRACTURE = new ItemJutsu.JutsuEnum(4, "memory_fracture", 'B', 120d, new SharinganGenjutsu(1));
-	public static final ItemJutsu.JutsuEnum MURDER_INTENT = new ItemJutsu.JutsuEnum(5, "murder_intent", 'B', 130d, new SharinganGenjutsu(2));
-	public static final ItemJutsu.JutsuEnum ILLUSIONARY_EXECUTION = new ItemJutsu.JutsuEnum(6, "illusionary_execution", 'A', 180d, new SharinganGenjutsu(3));
-	public static final ItemJutsu.JutsuEnum BURNING_COFFIN = new ItemJutsu.JutsuEnum(7, "burning_coffin", 'A', 170d, new SharinganGenjutsu(4));
+	public static final ItemJutsu.JutsuEnum FALSE_OPENING = new ItemJutsu.JutsuEnum(3, "false_opening", 'C', 80d, new FalseOpening()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum MEMORY_FRACTURE = new ItemJutsu.JutsuEnum(4, "memory_fracture", 'B', 120d, new SharinganGenjutsu(1)).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum MURDER_INTENT = new ItemJutsu.JutsuEnum(5, "murder_intent", 'B', 130d, new SharinganGenjutsu(2)).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum ILLUSIONARY_EXECUTION = new ItemJutsu.JutsuEnum(6, "illusionary_execution", 'A', 180d, new SharinganGenjutsu(3)).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum BURNING_COFFIN = new ItemJutsu.JutsuEnum(7, "burning_coffin", 'A', 170d, new SharinganGenjutsu(4)).withCustomBalance();
 
 	public ItemInton(ElementsNarutomodMod instance) {
 		super(instance, 441);
@@ -181,6 +181,7 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 				ClientGenjutsuMessage.send((EntityPlayerMP)target, 0, duration);
 				ProcedureSync.MobAppearanceParticle.send((EntityPlayerMP)target, entity.getEntityId());
 			}
+			CustomJutsuEffects.onGenjutsu(entity, target, 0, mastery);
 			return true;
 		}
 	}
@@ -226,6 +227,7 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 				target.attackEntityFrom(DamageSource.MAGIC, 3f + mastery * 3f);
 				Chakra.pathway(target).consume(10d + mastery * 25d);
 			}
+			CustomJutsuEffects.onGenjutsu(entity, target, this.type, mastery);
 			markGenjutsu(entity, target, duration, this.type);
 			target.setRevengeTarget(entity);
 			return true;

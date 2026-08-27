@@ -29,12 +29,10 @@ import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
-import net.minecraft.block.material.Material;
-
+import net.narutomod.EyeCustomization;
 import net.narutomod.procedure.ProcedureSharinganHelmetTickEvent;
 import net.narutomod.procedure.ProcedureSync;
 import net.narutomod.procedure.ProcedureUtils;
@@ -86,6 +84,14 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 		public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
 			ItemDojutsu.ClientModel.ModelHelmetSnug armorModel = (ItemDojutsu.ClientModel.ModelHelmetSnug)super.getArmorModel(living, stack, slot, defaultModel);
 			armorModel.highlightHide = isBlinded(stack);
+			// Only vertical fitting is user-adjustable. The eye anchor now lives
+			// inside the head transform, and this tiny local offset only prevents
+			// depth flicker without making the eyes visibly float in front.
+			armorModel.eyeOffsetX = 0.0F;
+			armorModel.eyeOffsetY = EyeCustomization.getVertical(living);
+			armorModel.eyeOffsetZ = -0.025F;
+			armorModel.eyeScaleX = 1.0F;
+			armorModel.eyeScaleY = 1.0F;
 			return armorModel;
 		}
 
@@ -128,25 +134,6 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 					}
 				}
 			}
-		}
-
-		// returns true if evaded, false if otherwise
-		public boolean onAttackEvent(LivingAttackEvent event, EntityLivingBase entity, EntityLivingBase attacker) {
-		 	if (entity.getRNG().nextFloat() <= 0.6f) {
-		 		Entity immediateSource = event.getSource().getImmediateSource();
-		    	List<BlockPos> list = ProcedureUtils.getAllAirBlocks(entity.world, entity.getEntityBoundingBox().grow(2.5d));
-		    	for (int i = 0; i < list.size(); i++) {
-		    		BlockPos pos = list.get(entity.getRNG().nextInt(list.size()));
-		    		Material material = entity.world.getBlockState(pos.down()).getMaterial();
-		    		if ((material.isSolid() || material == material.WATER)
-		    		 && immediateSource.getDistanceSqToCenter(pos) > 6.25d && ProcedureUtils.isSpaceOpenToStandOn(entity, pos)) {
-			 			event.setCanceled(true);
-			 			entity.setPositionAndUpdate(0.5d+pos.getX(), pos.getY(), 0.5d+pos.getZ());
-			 			return true;
-		    		}
-		    	}
-		 	}
-		 	return false;
 		}
 
 		@Override
@@ -255,7 +242,6 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 			Entity attacker = event.getSource().getTrueSource();
 			if (wearingAny(entity) && ItemJutsu.canTarget(entity) && !entity.isRiding() && !event.getSource().isUnblockable()
 			 && attacker instanceof EntityLivingBase && !attacker.world.isRemote) {
-				((Base)entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD).getItem()).onAttackEvent(event, entity, (EntityLivingBase)attacker);
 				if (entity instanceof EntityPlayer) {
 					this.lockOnTarget(entity, (EntityLivingBase)attacker, 300);
 				}

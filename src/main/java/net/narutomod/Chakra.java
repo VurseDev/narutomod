@@ -190,6 +190,7 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 		private int motionlessTime;
 		private double prevX;
 		private double prevZ;
+		private boolean passiveRegeneration;
 
 		protected PathwayPlayer(EntityPlayer playerIn) {
 			super(playerIn);
@@ -232,7 +233,9 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 				super.set(amountIn);
 				this.user.getEntityData().setDouble(DATAKEY, amountIn);
 				this.sendToClient();
-				this.motionlessTime = 0;
+				if (!this.passiveRegeneration) {
+					this.motionlessTime = 0;
+				}
 			}
 		}
 
@@ -256,12 +259,17 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 			 || !this.user.onGround || this.user.isSwingInProgress) {
 			 	this.motionlessTime = 0;
 			}
-			if (this.motionlessTime > 80) {
+			if (this.motionlessTime > 40) {
 				if (PlayerStats.canRegenerateChakra(this.user)) {
 					double regen = Chakra.isStaminaMode(this.user) ? ModConfig.CHAKRA_REGEN_RATE * 1.35d : ModConfig.CHAKRA_REGEN_RATE;
-					double totalRegen = (regen + PlayerStats.getSpiRegenBonus(this.user)
+					double totalRegen = (regen + PlayerStats.getSpiRegenBonus(this.user, this.getMax())
 					 + 0.001f * this.user.getFoodStats().getSaturationLevel()) * ItemByakugan.getTenketsuRegenMultiplier(this.user);
-					this.consume(-totalRegen);
+					this.passiveRegeneration = true;
+					try {
+						this.consume(-totalRegen);
+					} finally {
+						this.passiveRegeneration = false;
+					}
 				}
 			}
 			boolean stamina = Chakra.isStaminaMode(this.user);

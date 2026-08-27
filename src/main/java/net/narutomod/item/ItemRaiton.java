@@ -51,8 +51,10 @@ public class ItemRaiton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum GIAN = new ItemJutsu.JutsuEnum(3, "false_darkness", 'B', 100d, new EntityFalseDarkness.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum KIRIN = new ItemJutsu.JutsuEnum(4, "kirin", 'S', 1500d, new EntityKirin.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum BLACKPANTHER = new ItemJutsu.JutsuEnum(5, "lightning_panther", 'S', 50d, new EntityLightningPanther.EC.Jutsu());
-	public static final ItemJutsu.JutsuEnum LIGHTNINGCLONE = new ItemJutsu.JutsuEnum(6, "lightning_clone", 'A', 95d, new ItemExtraJutsu.LightningCloneJutsu());
-	public static final ItemJutsu.JutsuEnum CHIDORISENBON = new ItemJutsu.JutsuEnum(7, "chidori_senbon", 'A', 60d, new ItemExtraJutsu.ChidoriSenbonJutsu());
+	public static final ItemJutsu.JutsuEnum LIGHTNINGCLONE = new ItemJutsu.JutsuEnum(6, "lightning_clone", 'A', 95d, new ItemExtraJutsu.LightningCloneJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum CHIDORISENBON = new ItemJutsu.JutsuEnum(7, "chidori_senbon", 'A', 60d, new ItemExtraJutsu.ChidoriSenbonJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum WAVEINSPIRATION = new ItemJutsu.JutsuEnum(8, "wave_of_inspiration", 'B', 70d, new ItemCanonicalJutsu.WaveOfInspiration()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum FOURPILLARBIND = new ItemJutsu.JutsuEnum(9, "four_pillar_bind", 'A', 140d, new ItemCanonicalJutsu.FourPillarBind()).withCustomBalance();
 
 	public ItemRaiton(ElementsNarutomodMod instance) {
 		super(instance, 373);
@@ -60,7 +62,7 @@ public class ItemRaiton extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(CHIDORI, CHAKRAMODE, CHASINGDOG, GIAN, KIRIN, BLACKPANTHER, LIGHTNINGCLONE, CHIDORISENBON));
+		elements.items.add(() -> new RangedItem(CHIDORI, CHAKRAMODE, CHASINGDOG, GIAN, KIRIN, BLACKPANTHER, LIGHTNINGCLONE, CHIDORISENBON, WAVEINSPIRATION, FOURPILLARBIND));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityChakraMode.class)
 			.id(new ResourceLocation("narutomod", "raitonchakramode"), ENTITYID).name("raitonchakramode").tracker(64, 1, true).build());
 	}

@@ -75,13 +75,13 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum HIRAISHIN = new ItemJutsu.JutsuEnum(9, "hiraishin", 'S', 10d, new EntityHiraishin.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum SHIKIGAMI = new ItemJutsu.JutsuEnum(10, "shikigami", 'B', 50d, new EntityShikigami.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum MULTICLONE = new ItemJutsu.JutsuEnum(11, "kage_bunshin_multi", 'A', new EntityKageBunshin.EC.Jutsu2());
-	public static final ItemJutsu.JutsuEnum CROWCLONE = new ItemJutsu.JutsuEnum(12, "crow_clone", 'C', 1250, 55d, new ItemExtraJutsu.CrowCloneJutsu());
-	public static final ItemJutsu.JutsuEnum CROWTRAPCLONE = new ItemJutsu.JutsuEnum(13, "crow_trap_clone", 'C', 70d, new ItemExtraJutsu.CrowTrapCloneJutsu());
-	public static final ItemJutsu.JutsuEnum EXPLOSIVECLONE = new ItemJutsu.JutsuEnum(14, "explosive_clone", 'B', 140d, new ItemExtraJutsu.ExplosiveCloneJutsu());
-	public static final ItemJutsu.JutsuEnum SHURIKENSHADOWCLONE = new ItemJutsu.JutsuEnum(15, "shuriken_shadow_clone", 'B', 55d, new ItemExtraJutsu.ShurikenShadowCloneJutsu());
-	public static final ItemJutsu.JutsuEnum FIRERASENGAN = new ItemJutsu.JutsuEnum(16, "fire_rasengan", 'A', 150d, new EntityRasengan.EC.FireJutsu());
-	public static final ItemJutsu.JutsuEnum SENSORIAL = new ItemJutsu.JutsuEnum(17, "sensorial_jutsu", 'S', 95d, new SensorialJutsu());
-	public static final ItemJutsu.JutsuEnum CHAKRAPULSE = new ItemJutsu.JutsuEnum(18, "chakra_pulse", 'D', 0, 35d, new ChakraPulse());
+	public static final ItemJutsu.JutsuEnum CROWCLONE = new ItemJutsu.JutsuEnum(12, "crow_clone", 'C', 1250, 55d, new ItemExtraJutsu.CrowCloneJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum CROWTRAPCLONE = new ItemJutsu.JutsuEnum(13, "crow_trap_clone", 'C', 70d, new ItemExtraJutsu.CrowTrapCloneJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum EXPLOSIVECLONE = new ItemJutsu.JutsuEnum(14, "explosive_clone", 'B', 140d, new ItemExtraJutsu.ExplosiveCloneJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum SHURIKENSHADOWCLONE = new ItemJutsu.JutsuEnum(15, "shuriken_shadow_clone", 'B', 55d, new ItemExtraJutsu.ShurikenShadowCloneJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum FIRERASENGAN = new ItemJutsu.JutsuEnum(16, "fire_rasengan", 'A', 150d, new EntityRasengan.EC.FireJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum SENSORIAL = new ItemJutsu.JutsuEnum(17, "sensorial_jutsu", 'S', 95d, new SensorialJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum CHAKRAPULSE = new ItemJutsu.JutsuEnum(18, "chakra_pulse", 'D', 0, 35d, new ChakraPulse()).withCustomBalance();
 
 	public ItemNinjutsu(ElementsNarutomodMod instance) {
 		super(instance, 377);

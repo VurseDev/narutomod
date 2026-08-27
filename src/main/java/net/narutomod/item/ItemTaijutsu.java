@@ -4,6 +4,9 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -17,8 +20,10 @@ import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EntityDamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
@@ -45,11 +50,15 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 	@GameRegistry.ObjectHolder("narutomod:taijutsu")
 	public static final Item block = null;
 
-	public static final ItemJutsu.JutsuEnum LEAF_WHIRLWIND = new ItemJutsu.JutsuEnum(0, "leaf_whirlwind", 'D', 35d, new StrikeJutsu(4.0d, 3.0f, 55, 1.0f, 0.6d, 0.18d, 0x80D8FF70, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP));
-	public static final ItemJutsu.JutsuEnum LEAF_HURRICANE = new ItemJutsu.JutsuEnum(1, "leaf_hurricane", 'C', 55d, new HurricaneJutsu());
-	public static final ItemJutsu.JutsuEnum DYNAMIC_ENTRY = new ItemJutsu.JutsuEnum(2, "dynamic_entry", 'C', 65d, new DynamicEntryJutsu());
-	public static final ItemJutsu.JutsuEnum PRIMARY_LOTUS = new ItemJutsu.JutsuEnum(3, "primary_lotus", 'B', 95d, new PrimaryLotusJutsu());
-	public static final ItemJutsu.JutsuEnum LION_COMBO = new ItemJutsu.JutsuEnum(4, "lion_combo", 'B', 85d, new LionComboJutsu());
+	public static final ItemJutsu.JutsuEnum LEAF_WHIRLWIND = new ItemJutsu.JutsuEnum(0, "leaf_whirlwind", 'D', 35d, new StrikeJutsu("leaf_whirlwind", 4.0d, 3.0f, 55, 1.0f, 0.6d, 0.18d, 0x80D8FF70, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP)).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum LEAF_HURRICANE = new ItemJutsu.JutsuEnum(1, "leaf_hurricane", 'C', 55d, new HurricaneJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum DYNAMIC_ENTRY = new ItemJutsu.JutsuEnum(2, "dynamic_entry", 'C', 65d, new DynamicEntryJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum PRIMARY_LOTUS = new ItemJutsu.JutsuEnum(3, "primary_lotus", 'B', 95d, new PrimaryLotusJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum LION_COMBO = new ItemJutsu.JutsuEnum(4, "lion_combo", 'B', 85d, new LionComboJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum PEREGRINE_FALCON_DROP = new ItemJutsu.JutsuEnum(5, "peregrine_falcon_drop", 'B', 95d, new PeregrineFalconDropJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum DRUNKEN_FIST = new ItemJutsu.JutsuEnum(6, "drunken_fist", 'C', 75d, new DrunkenFistJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum LEAF_DROP = new ItemJutsu.JutsuEnum(7, "leaf_drop", 'C', 65d, new LeafDropJutsu()).withCustomBalance();
+	private static final String DRUNKEN_FIST_UNTIL = "CanonicalDrunkenFistUntil";
 
 	public ItemTaijutsu(ElementsNarutomodMod instance) {
 		super(instance, 1012);
@@ -70,11 +79,13 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 	public void init(FMLInitializationEvent event) {
 		ProcedureOnLeftClickEmpty.addQualifiedItem(block, EnumHand.MAIN_HAND);
 		ProcedureOnLeftClickEmpty.addQualifiedItem(block, EnumHand.OFF_HAND);
+		MinecraftForge.EVENT_BUS.register(new CombatHooks());
 	}
 
 	public static class RangedItem extends ItemJutsu.Base {
 		public RangedItem() {
-			super(ItemJutsu.JutsuEnum.Type.TAIJUTSU, LEAF_WHIRLWIND, LEAF_HURRICANE, DYNAMIC_ENTRY, PRIMARY_LOTUS, LION_COMBO);
+			super(ItemJutsu.JutsuEnum.Type.TAIJUTSU, LEAF_WHIRLWIND, LEAF_HURRICANE, DYNAMIC_ENTRY, PRIMARY_LOTUS, LION_COMBO,
+			 PEREGRINE_FALCON_DROP, DRUNKEN_FIST, LEAF_DROP);
 			this.setUnlocalizedName("taijutsu");
 			this.setRegistryName("taijutsu");
 			this.setCreativeTab(TabCustomTabs.jutsus);
@@ -98,6 +109,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 	}
 
 	private static class StrikeJutsu implements ItemJutsu.IJutsuCallback {
+		protected final String effectName;
 		protected final double range;
 		protected final float baseDamage;
 		protected final long cooldown;
@@ -107,7 +119,8 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 		protected final int color;
 		protected final SoundEvent sound;
 
-		StrikeJutsu(double range, float baseDamage, long cooldown, float exhaustion, double forward, double lift, int color, SoundEvent sound) {
+		StrikeJutsu(String effectNameIn, double range, float baseDamage, long cooldown, float exhaustion, double forward, double lift, int color, SoundEvent sound) {
+			this.effectName = effectNameIn;
 			this.range = range;
 			this.baseDamage = baseDamage;
 			this.cooldown = cooldown;
@@ -127,7 +140,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 			EntityLivingBase target = this.getTarget(entity, this.range + power);
 			if (target == null) {
 				this.dash(entity, power * 0.45d);
-				this.fx(entity, false);
+				this.fx(entity, null, power, false);
 				this.cooldown(stack, entity);
 				return true;
 			}
@@ -135,7 +148,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 			target.hurtResistantTime = 0;
 			target.attackEntityFrom(this.source(entity), damage);
 			this.push(entity, target, power);
-			this.fx(entity, true);
+			this.fx(entity, target, power, true);
 			this.cooldown(stack, entity);
 			return true;
 		}
@@ -173,11 +186,11 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 		}
 
 		protected DamageSource source(EntityLivingBase entity) {
-			return entity instanceof EntityPlayer ? DamageSource.causePlayerDamage((EntityPlayer)entity) : DamageSource.causeMobDamage(entity);
+			return entity instanceof EntityPlayer ? new EntityDamageSource("narutomod.taijutsu", entity) : DamageSource.causeMobDamage(entity);
 		}
 
 		protected float damage(EntityLivingBase entity, float power) {
-			float stats = entity instanceof EntityPlayer ? (float)(PlayerStats.getStat((EntityPlayer)entity, 1) * 0.045d + PlayerStats.getStat((EntityPlayer)entity, 0) * 0.025d) : 0f;
+			float stats = entity instanceof EntityPlayer ? (float)PlayerStats.getTaijutsuDamageBonus((EntityPlayer)entity) : 0f;
 			return (this.baseDamage + stats) * (0.75f + 0.25f * power);
 		}
 
@@ -191,27 +204,14 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 			ProcedureUtils.addVelocity(entity, look.x * scale, Math.max(0.05d, look.y * scale * 0.25d), look.z * scale);
 		}
 
-		protected void fx(EntityLivingBase entity, boolean hit) {
+		protected void fx(EntityLivingBase entity, EntityLivingBase target, float power, boolean hit) {
 			entity.swingArm(EnumHand.MAIN_HAND);
 			entity.world.playSound(null, entity.posX, entity.posY, entity.posZ, this.sound, SoundCategory.PLAYERS, hit ? 1.2f : 0.7f, hit ? 0.85f : 1.2f);
 			if (hit) {
-				entity.world.playSound(null, entity.posX, entity.posY, entity.posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.25f, 1.8f);
-				entity.world.playSound(null, entity.posX, entity.posY, entity.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_CRIT, SoundCategory.PLAYERS, 1.0f, 0.7f);
+				entity.world.playSound(null, target.posX, target.posY, target.posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.25f, 1.8f);
+				entity.world.playSound(null, target.posX, target.posY, target.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_CRIT, SoundCategory.PLAYERS, 1.0f, 0.7f);
 			}
-			Particles.spawnParticle(entity.world, Particles.Types.SMOKE, entity.posX, entity.posY + 0.9d, entity.posZ,
-			 hit ? 70 : 28, 0.55d, 0.45d, 0.55d, 0d, 0.08d, 0d, this.color, 28, 6, 0xF0, entity.getEntityId());
-			for (int i = 0; i < (hit ? 34 : 12); i++) {
-				entity.world.spawnParticle(EnumParticleTypes.CRIT, entity.posX + (entity.getRNG().nextDouble() - 0.5d) * 1.2d,
-				 entity.posY + 0.6d + entity.getRNG().nextDouble() * 1.0d, entity.posZ + (entity.getRNG().nextDouble() - 0.5d) * 1.2d,
-				 (entity.getRNG().nextDouble() - 0.5d) * 0.25d, 0.12d, (entity.getRNG().nextDouble() - 0.5d) * 0.25d);
-			}
-			if (hit) {
-				for (int i = 0; i < 12; i++) {
-					entity.world.spawnParticle(EnumParticleTypes.EXPLOSION_NORMAL, entity.posX + (entity.getRNG().nextDouble() - 0.5d) * 1.4d,
-					 entity.posY + 0.8d + entity.getRNG().nextDouble() * 0.7d, entity.posZ + (entity.getRNG().nextDouble() - 0.5d) * 1.4d,
-					 (entity.getRNG().nextDouble() - 0.5d) * 0.2d, 0.08d, (entity.getRNG().nextDouble() - 0.5d) * 0.2d);
-				}
-			}
+			CustomJutsuEffects.taijutsu(this.effectName, entity, target, power, hit);
 		}
 
 		protected void cooldown(ItemStack stack, EntityLivingBase entity) {
@@ -227,7 +227,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 
 	private static class HurricaneJutsu extends StrikeJutsu {
 		HurricaneJutsu() {
-			super(4.5d, 4.5f, 80, 1.4f, 0.95d, 0.35d, 0x90B8FF70, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP);
+			super("leaf_hurricane", 4.5d, 4.5f, 80, 1.4f, 0.95d, 0.35d, 0x90B8FF70, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP);
 		}
 
 		@Override
@@ -243,7 +243,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 
 	private static class DynamicEntryJutsu extends StrikeJutsu {
 		DynamicEntryJutsu() {
-			super(8.0d, 6.0f, 120, 2.0f, 1.45d, 0.25d, 0x90FFFFFF, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK);
+			super("dynamic_entry", 8.0d, 6.0f, 120, 2.0f, 1.45d, 0.25d, 0x90FFFFFF, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK);
 		}
 
 		@Override
@@ -258,7 +258,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 
 	private static class PrimaryLotusJutsu extends StrikeJutsu {
 		PrimaryLotusJutsu() {
-			super(3.6d, 8.0f, 220, 3.5f, 0.55d, 0.9d, 0xA0E0E0E0, SoundEvents.ENTITY_GENERIC_EXPLODE);
+			super("primary_lotus", 3.6d, 8.0f, 220, 3.5f, 0.55d, 0.9d, 0xA0E0E0E0, SoundEvents.ENTITY_GENERIC_EXPLODE);
 		}
 
 		@Override
@@ -279,7 +279,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 
 	private static class LionComboJutsu extends StrikeJutsu {
 		LionComboJutsu() {
-			super(4.0d, 7.0f, 180, 2.8f, 0.75d, 0.55d, 0x90FFD070, SoundEvents.ENTITY_PLAYER_ATTACK_CRIT);
+			super("lion_combo", 4.0d, 7.0f, 180, 2.8f, 0.75d, 0.55d, 0x90FFD070, SoundEvents.ENTITY_PLAYER_ATTACK_CRIT);
 		}
 
 		@Override
@@ -300,5 +300,113 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 
 		@Override public float getPowerupDelay() { return 32.0f; }
 		@Override public float getMaxPower() { return 1.7f; }
+	}
+
+	private static class PeregrineFalconDropJutsu extends StrikeJutsu {
+		PeregrineFalconDropJutsu() {
+			super("peregrine_falcon_drop", 5.0d, 9.0f, 320, 3.0f, 0.2d, -1.2d,
+			 0xC0E8E8E8, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK);
+		}
+
+		@Override
+		public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
+			if (entity.world.isRemote || !(entity instanceof EntityPlayer)) return false;
+			EntityLivingBase target = this.getTarget(entity, this.range + power);
+			if (target == null || (target.onGround && entity.onGround && target.posY >= entity.posY - 0.5d)) {
+				((EntityPlayer)entity).sendStatusMessage(new net.minecraft.util.text.TextComponentString("Launch the target or attack from above first."), true);
+				return false;
+			}
+			entity.setPositionAndUpdate(target.posX, target.posY + target.height + 0.35d, target.posZ);
+			ProcedureUtils.setVelocity(entity, 0d, -1.35d, 0d);
+			ProcedureUtils.setVelocity(target, 0d, -1.1d, 0d);
+			target.hurtResistantTime = 0;
+			target.attackEntityFrom(this.source(entity), this.damage(entity, power) + 3.0f * power);
+			target.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, 55, 2, false, false));
+			this.fx(entity, target, power, true);
+			CustomJutsuEffects.impact(entity.world, target.getPositionVector(), 0xA0D8D0C8, 4.2f, 15, 4.0f);
+			entity.world.playSound(null, target.posX, target.posY, target.posZ,
+			 SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.9f, 0.62f);
+			this.cooldown(stack, entity);
+			return true;
+		}
+
+		@Override public float getPowerupDelay() { return 34.0f; }
+		@Override public float getMaxPower() { return 1.8f; }
+	}
+
+	private static class DrunkenFistJutsu implements ItemJutsu.IJutsuCallback {
+		@Override
+		public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
+			if (entity.world.isRemote) return false;
+			int duration = 180 + (int)(power * 25f);
+			entity.getEntityData().setLong(DRUNKEN_FIST_UNTIL, entity.world.getTotalWorldTime() + duration);
+			entity.addPotionEffect(new PotionEffect(MobEffects.SPEED, duration, 1, false, false));
+			entity.addPotionEffect(new PotionEffect(MobEffects.RESISTANCE, duration, 0, false, false));
+			entity.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, duration, 0, false, false));
+			entity.world.playSound(null, entity.posX, entity.posY, entity.posZ,
+			 SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 1.0f, 0.72f);
+			entity.world.playSound(null, entity.posX, entity.posY, entity.posZ,
+			 SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, SoundCategory.PLAYERS, 0.8f, 0.55f);
+			CustomJutsuEffects.taijutsu("drunken_fist", entity, null, power, false);
+			if (stack.getItem() instanceof ItemJutsu.Base) ((ItemJutsu.Base)stack.getItem()).setCurrentJutsuCooldown(stack, 700);
+			return true;
+		}
+		@Override public float getBasePower() { return 1.0f; }
+		@Override public float getPowerupDelay() { return 18f; }
+		@Override public float getMaxPower() { return 1.6f; }
+	}
+
+	private static class LeafDropJutsu extends StrikeJutsu {
+		LeafDropJutsu() {
+			super("leaf_drop", 5.5d, 7.0f, 240, 2.4f, 0.45d, -1.0d,
+			 0xB0D8C898, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK);
+		}
+
+		@Override
+		public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
+			if (entity.world.isRemote) return false;
+			EntityLivingBase direct = this.getTarget(entity, this.range + power);
+			if (entity.onGround) ProcedureUtils.addVelocity(entity, 0d, 0.28d, 0d);
+			ProcedureUtils.addVelocity(entity, entity.getLookVec().x * 0.25d, -1.15d, entity.getLookVec().z * 0.25d);
+			Vec3d impact = direct != null ? direct.getPositionVector() : entity.getPositionVector().add(entity.getLookVec().scale(2.2d));
+			if (direct != null) {
+				direct.hurtResistantTime = 0;
+				direct.attackEntityFrom(this.source(entity), this.damage(entity, power) + 2f * power);
+				ProcedureUtils.addVelocity(direct, 0d, -0.4d, 0d);
+			}
+			for (EntityLivingBase target : entity.world.getEntitiesWithinAABB(EntityLivingBase.class,
+			 new net.minecraft.util.math.AxisAlignedBB(impact.x - 3d, impact.y - 1.5d, impact.z - 3d,
+			 impact.x + 3d, impact.y + 2d, impact.z + 3d))) {
+				if (target.equals(entity) || target.equals(direct) || entity.isOnSameTeam(target)) continue;
+				target.attackEntityFrom(this.source(entity), this.damage(entity, power) * 0.35f);
+				Vec3d away = target.getPositionVector().subtract(impact).normalize();
+				ProcedureUtils.addVelocity(target, away.x * 0.55d, 0.25d, away.z * 0.55d);
+			}
+			this.fx(entity, direct, power, direct != null);
+			CustomJutsuEffects.impact(entity.world, impact, 0xA0A08868, 4.6f, 13, 3.3f);
+			entity.world.playSound(null, impact.x, impact.y, impact.z,
+			 SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.75f, 0.68f);
+			this.cooldown(stack, entity);
+			return true;
+		}
+
+		@Override public float getPowerupDelay() { return 28f; }
+		@Override public float getMaxPower() { return 1.7f; }
+	}
+
+	/** Drunken Fist improves committed attacks but never grants passive auto-dodge. */
+	public static class CombatHooks {
+		@SubscribeEvent
+		public void onLivingHurt(LivingHurtEvent event) {
+			if (!(event.getSource().getTrueSource() instanceof EntityLivingBase)) return;
+			EntityLivingBase attacker = (EntityLivingBase)event.getSource().getTrueSource();
+			NBTTagCompound data = attacker.getEntityData();
+			if (data.getLong(DRUNKEN_FIST_UNTIL) < attacker.world.getTotalWorldTime()) return;
+			event.setAmount(event.getAmount() * 1.12f);
+			Vec3d side = new Vec3d(-attacker.getLookVec().z, 0d, attacker.getLookVec().x);
+			double sway = (attacker.getRNG().nextDouble() - 0.5d) * 0.38d;
+			ProcedureUtils.addVelocity(attacker, side.x * sway, 0.03d, side.z * sway);
+			CustomJutsuEffects.taijutsu("drunken_fist_hit", attacker, event.getEntityLiving(), 1.0f, true);
+		}
 	}
 }

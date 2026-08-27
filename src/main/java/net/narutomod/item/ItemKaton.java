@@ -60,9 +60,10 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum GREATFLAME = new ItemJutsu.JutsuEnum(3, "katonfirestream", 'C', 20d, new EntityFirestream.EC.Jutsu2());
 	public static final ItemJutsu.JutsuEnum FLAMESLICE = new ItemJutsu.JutsuEnum(4, "flame_slice", 'D', 20d, new EntityFlameSlice.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum BARRIER = new ItemJutsu.JutsuEnum(5, "flame_formation", 'B', 100d, new EntityFlameFormation.EC.Jutsu());
-	public static final ItemJutsu.JutsuEnum FIREPHOENIX = new ItemJutsu.JutsuEnum(6, "fire_phoenix", 'B', 85d, new EntityFirePhoenix.Jutsu());
-	public static final ItemJutsu.JutsuEnum HOUSENKA = new ItemJutsu.JutsuEnum(7, "housenka", 'D', 36d, new ItemExtraJutsu.HousenkaJutsu(false));
-	public static final ItemJutsu.JutsuEnum HOUSENKATSUMABENI = new ItemJutsu.JutsuEnum(8, "housenka_tsumabeni", 'C', 45d, new ItemExtraJutsu.HousenkaJutsu(true));
+	public static final ItemJutsu.JutsuEnum FIREPHOENIX = new ItemJutsu.JutsuEnum(6, "fire_phoenix", 'B', 85d, new EntityFirePhoenix.Jutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum HOUSENKA = new ItemJutsu.JutsuEnum(7, "housenka", 'D', 36d, new ItemExtraJutsu.HousenkaJutsu(false)).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum HOUSENKATSUMABENI = new ItemJutsu.JutsuEnum(8, "housenka_tsumabeni", 'C', 45d, new ItemExtraJutsu.HousenkaJutsu(true)).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum FLAMEWHIRLWIND = new ItemJutsu.JutsuEnum(9, "flame_whirlwind", 'B', 90d, new ItemCanonicalJutsu.FlameWhirlwind()).withCustomBalance();
 
 	public ItemKaton(ElementsNarutomodMod instance) {
 		super(instance, 366);
@@ -70,7 +71,7 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(GREATFIREBALL, GFANNIHILATION, HIDINGINASH, GREATFLAME, FLAMESLICE, BARRIER, FIREPHOENIX, HOUSENKA, HOUSENKATSUMABENI));
+		elements.items.add(() -> new RangedItem(GREATFIREBALL, GFANNIHILATION, HIDINGINASH, GREATFLAME, FLAMESLICE, BARRIER, FIREPHOENIX, HOUSENKA, HOUSENKATSUMABENI, FLAMEWHIRLWIND));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityBigFireball.class)
 				.id(new ResourceLocation("narutomod", "katonfireball"), ENTITYID).name("katonfireball").tracker(64, 1, true).build());
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityFirePhoenix.class)
@@ -301,6 +302,8 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 				 .damageEntities(ItemJutsu.causeJutsuDamage(this, this.shootingEntity).setFireDamage(), this.damage).setFire(10);
 				this.world.newExplosion(this.shootingEntity, this.posX, this.posY, this.posZ, Math.max(0.5f, this.power * 0.35f),
 				 ForgeEventFactory.getMobGriefingEvent(this.world, this.shootingEntity), false);
+				CustomJutsuEffects.impact(this.world, this.getPositionVector(), 0xB8FF5A00,
+				 Math.max(2.4f, this.power * 1.25f), 12, 2.8f);
 				this.setDead();
 			}
 		}

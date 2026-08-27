@@ -27,6 +27,8 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.block.state.IBlockState;
 
 import net.narutomod.entity.EntityToad;
+import net.narutomod.entity.EntityToadScout;
+import net.narutomod.entity.EntitySummonAnimal;
 import net.narutomod.entity.EntitySnake;
 import net.narutomod.entity.EntitySlug;
 import net.narutomod.entity.EntityEnma;
@@ -152,6 +154,8 @@ public class ItemSummoningContract extends ElementsNarutomodMod.ModElement {
 			if (this.isJutsuEnabled(itemstack, SUMMONTOAD)) {
 				list.add(TextFormatting.BLUE + new TextComponentTranslation("entity.toad.name").getUnformattedComponentText() + " "
 				 + new TextComponentTranslation("item.summoning_contract.name").getUnformattedComponentText() + TextFormatting.RESET);
+				list.add(TextFormatting.GRAY + new TextComponentTranslation("tooltip.narutomod.toad_summon.tiers").getUnformattedComponentText()
+				 + TextFormatting.RESET);
 			} else if (this.isJutsuEnabled(itemstack, SUMMONSNAKE)) {
 				list.add(TextFormatting.BLUE + new TextComponentTranslation("entity.snake.name").getUnformattedComponentText() + " "
 				 + new TextComponentTranslation("item.summoning_contract.name").getUnformattedComponentText() + TextFormatting.RESET);
@@ -200,8 +204,10 @@ public class ItemSummoningContract extends ElementsNarutomodMod.ModElement {
 				entity.world.playSound(null, entity.posX, entity.posY, entity.posZ,
 				  net.minecraft.util.SoundEvent.REGISTRY.getObject(new ResourceLocation("narutomod:kuchiyosenojutsu")),
 				  net.minecraft.util.SoundCategory.PLAYERS, 1f, 0.8f);
-				EntityToad.EntityCustom entity1 = power >= 16.0f ? new EntityGamabunta.EntityCustom(entity)
-				 : new EntityGenericToad(entity, power);
+				EntitySummonAnimal.Base entity1 = power >= 16.0f ? new EntityGamabunta.EntityCustom(entity)
+				 : power >= 6.0f ? new EntityGenericToad(entity, power)
+				 : power >= 2.5f ? new EntityToadScout.EntityMiniGamakichi(entity)
+				 : new EntityToadScout.EntityScout(entity);
 				entity1.setLocationAndAngles(entity.posX, entity.posY, entity.posZ, entity.rotationYaw, 0.0f);
 				net.narutomod.event.SpecialEvent.setDelayedSpawnEvent(entity.world, entity1, 0, 0, 0, entity.world.getTotalWorldTime() + 20);
 				return true;

@@ -151,6 +151,84 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 	public static double getMaxPower(EntityLivingBase entity, double jutsuCkakraUsage) {
 		return jutsuCkakraUsage > 0d ? Chakra.pathway(entity).getAmount() / jutsuCkakraUsage : Double.MAX_VALUE;
 	}
+
+	/**
+	 * Returns mastery after the jutsu has been learned. Zero is newly learned and
+	 * one is fully mastered at three times the required XP. When a special item
+	 * casts another item's jutsu, the player's inventory is searched for the best
+	 * matching mastery record.
+	 */
+	public static float getJutsuMastery(ItemStack sourceStack, JutsuEnum jutsu, EntityLivingBase entity) {
+		float mastery = getJutsuMastery(sourceStack, jutsu);
+		if (entity instanceof EntityPlayer) {
+			EntityPlayer player = (EntityPlayer)entity;
+			for (ItemStack stack : player.inventory.mainInventory) {
+				mastery = Math.max(mastery, getJutsuMastery(stack, jutsu));
+			}
+			for (ItemStack stack : player.inventory.offHandInventory) {
+				mastery = Math.max(mastery, getJutsuMastery(stack, jutsu));
+			}
+		}
+		return mastery;
+	}
+
+	private static float getJutsuMastery(ItemStack stack, JutsuEnum jutsu) {
+		if (stack == null || stack.isEmpty() || !(stack.getItem() instanceof Base) || jutsu == null) {
+			return 0f;
+		}
+		Base item = (Base)stack.getItem();
+		int required = item.getRequiredXp(stack, jutsu);
+		if (required < 0) {
+			return 0f;
+		}
+		if (required == 0) {
+			return 1f;
+		}
+		return MathHelper.clamp(((float)item.getJutsuXp(stack, jutsu) - (float)required)
+		 / ((float)required * 2.0f), 0f, 1f);
+	}
+
+	/**
+	 * Custom jutsu resource balance. Large pools remain relevant, while mastery
+	 * sharply improves efficiency and a rank-sensitive cap prevents one cast from
+	 * accidentally consuming an entire end-game chakra/stamina pool.
+	 */
+	public static double getCustomResourceCost(double baseCost, char rank, EntityLivingBase entity,
+	 float power, float masteryIn) {
+		if (baseCost <= 0d || entity == null) {
+			return Math.max(0d, baseCost);
+		}
+		double mastery = MathHelper.clamp((double)masteryIn, 0d, 1d);
+		double maxResource = Math.max(0d, Chakra.pathway(entity).getMax());
+		double excessResource = Math.max(0d, maxResource - 500d);
+		double poolRatio = rank == 'S' ? 0.05d : rank == 'A' ? 0.035d : rank == 'B' ? 0.025d
+		 : rank == 'C' ? 0.015d : rank == 'D' ? 0.01d : 0.02d;
+
+		// Fixed costs fall to 65%; the large-pool surcharge falls to 20% at full mastery.
+		double fixedEfficiency = 1.0d - 0.35d * mastery;
+		double poolEfficiency = 1.0d - 0.80d * mastery;
+		double charge = Math.max(1.0d, (double)power);
+		double minimumCost = baseCost * fixedEfficiency;
+		double calculatedCost = (minimumCost + excessResource * poolRatio * poolEfficiency) * charge;
+
+		// Per-cast ceilings still make higher ranks meaningfully more expensive.
+		double noviceCap = rank == 'S' ? 0.40d : rank == 'A' ? 0.32d : rank == 'B' ? 0.25d
+		 : rank == 'C' ? 0.18d : rank == 'D' ? 0.12d : 0.22d;
+		double masterCap = rank == 'S' ? 0.15d : rank == 'A' ? 0.11d : rank == 'B' ? 0.08d
+		 : rank == 'C' ? 0.06d : rank == 'D' ? 0.04d : 0.07d;
+		double maximumCost = maxResource * (noviceCap + (masterCap - noviceCap) * mastery);
+		return Math.max(minimumCost, Math.min(calculatedCost, Math.max(minimumCost, maximumCost)));
+	}
+
+	/** Legacy uncharged/novice calculation retained for compatibility. */
+	public static double getCustomResourceCost(double baseCost, char rank, EntityLivingBase entity) {
+		return getCustomResourceCost(baseCost, rank, entity, 1.0f, 0.0f);
+	}
+
+	public static long getCustomCooldownTicks(char rank) {
+		return rank == 'S' ? 600L : rank == 'A' ? 360L : rank == 'B' ? 240L
+		 : rank == 'C' ? 140L : rank == 'D' ? 80L : 200L;
+	}
 	
 	public abstract static class Base extends Item {
 		private static final String JUTSU_INDEX_KEY = "JutsuIndexKey";
@@ -196,14 +274,24 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 				return false;
 			}
 			Chakra.Pathway pw = Chakra.pathway(entity);
-			double d = Math.max(this.getMinimumResourceCost(stack, entity, jutsuEnum),
-			 jutsuEnum.chakraUsage * power * this.getMasteryChakraCostModifier(stack, entity) * ItemByakugan.getTenketsuCostMultiplier(entity));
+			double d;
+			if (jutsuEnum.usesCustomBalance()) {
+				float mastery = ItemJutsu.getJutsuMastery(stack, jutsuEnum, entity);
+				d = ItemJutsu.getCustomResourceCost(jutsuEnum.chakraUsage, jutsuEnum.rank, entity, power, mastery)
+				 * ItemByakugan.getTenketsuCostMultiplier(entity);
+			} else {
+				d = Math.max(this.getMinimumResourceCost(stack, entity, jutsuEnum),
+				 jutsuEnum.chakraUsage * power * this.getMasteryChakraCostModifier(stack, entity)
+				 * ItemByakugan.getTenketsuCostMultiplier(entity));
+			}
 			if (power <= 0f || pw.getAmount() < d) {
 				pw.warningDisplay();
 				return false;
 			}
 			if (jutsuEnum.jutsu.createJutsu(stack, entity, power)) {
 				pw.consume(d);
+				this.applyCustomCooldownFloor(stack, entity, jutsuEnum);
+				CustomJutsuEffects.onCast(jutsuEnum, entity, power);
 				return true;
 			}
 			return false;
@@ -219,8 +307,24 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		}
 
 		private double getMinimumResourceCost(ItemStack stack, EntityLivingBase entity, JutsuEnum jutsuEnum) {
+			if (jutsuEnum.usesCustomBalance()) {
+				return ItemJutsu.getCustomResourceCost(jutsuEnum.chakraUsage, jutsuEnum.rank, entity, 1.0f,
+				 ItemJutsu.getJutsuMastery(stack, jutsuEnum, entity)) * ItemByakugan.getTenketsuCostMultiplier(entity);
+			}
 			return jutsuEnum.chakraUsage > 0d
-			 ? jutsuEnum.chakraUsage * this.getMasteryChakraCostModifier(stack, entity) * ItemByakugan.getTenketsuCostMultiplier(entity) : 0d;
+			 ? jutsuEnum.chakraUsage * this.getMasteryChakraCostModifier(stack, entity)
+			   * ItemByakugan.getTenketsuCostMultiplier(entity) : 0d;
+		}
+
+		private void applyCustomCooldownFloor(ItemStack stack, EntityLivingBase entity, JutsuEnum jutsuEnum) {
+			if (!jutsuEnum.usesCustomBalance()) {
+				return;
+			}
+			long minimumExpiry = entity.world.getTotalWorldTime() + ItemJutsu.getCustomCooldownTicks(jutsuEnum.rank);
+			if (this.getJutsuCooldown(stack, jutsuEnum.index) < minimumExpiry) {
+				this.validateMapTags(stack, jutsuEnum.index);
+				stack.getTagCompound().setLong(CDMAP_KEY + jutsuEnum.index, minimumExpiry);
+			}
 		}
 
 		private double getMasteryChakraCostModifier(ItemStack stack, EntityLivingBase entity) {
@@ -751,6 +855,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		public final double chakraUsage;
 		public final IJutsuCallback jutsu;
 		private Type type;
+		private boolean customBalance;
 		public float basePower = 0f;
 		public float powerUpDelay = 50f;
 		private static final List<JutsuEnum> jutsuList = Lists.newArrayList();
@@ -781,6 +886,15 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 			this.chakraUsage = chakraUsageIn;
 			this.jutsu = jutsuIn;
 			JutsuEnum.jutsuList.add(this);
+		}
+
+		public JutsuEnum withCustomBalance() {
+			this.customBalance = true;
+			return this;
+		}
+
+		public boolean usesCustomBalance() {
+			return this.customBalance;
 		}
 		
 		public String getName() {

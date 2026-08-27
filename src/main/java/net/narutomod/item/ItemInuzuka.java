@@ -10,8 +10,13 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.ModelBase;
+import net.minecraft.client.model.ModelBox;
+import net.minecraft.client.model.ModelRenderer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraft.client.renderer.entity.RenderWolf;
+import net.minecraft.client.renderer.entity.RenderLiving;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -32,6 +37,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 
@@ -50,7 +56,7 @@ public class ItemInuzuka extends ElementsNarutomodMod.ModElement {
 	@GameRegistry.ObjectHolder("narutomod:inuzuka")
 	public static final Item block = null;
 	private static final int NINKEN_ID = 9320;
-	public static final ItemJutsu.JutsuEnum NINKEN = new ItemJutsu.JutsuEnum(0, "ninken_companion", 'D', 80d, new NinkenJutsu());
+	public static final ItemJutsu.JutsuEnum NINKEN = new ItemJutsu.JutsuEnum(0, "ninken_companion", 'D', 80d, new NinkenJutsu()).withCustomBalance();
 
 	public ItemInuzuka(ElementsNarutomodMod instance) {
 		super(instance, 1013);
@@ -67,7 +73,7 @@ public class ItemInuzuka extends ElementsNarutomodMod.ModElement {
 	@SideOnly(Side.CLIENT)
 	public void preInit(FMLPreInitializationEvent event) {
 		RenderingRegistry.registerEntityRenderingHandler(EntityNinken.class,
-		 renderManager -> new RenderWolf(renderManager));
+		 renderManager -> new RenderNinken(renderManager));
 	}
 
 	@Override
@@ -136,6 +142,304 @@ public class ItemInuzuka extends ElementsNarutomodMod.ModElement {
 		}
 	}
 
+	@SideOnly(Side.CLIENT)
+	private static class RenderNinken extends RenderLiving<EntityNinken> {
+		private static final ResourceLocation TEXTURE = new ResourceLocation("narutomod:textures/akamaru_ninken.png");
+
+		RenderNinken(RenderManager renderManager) {
+			super(renderManager, new ModelAkamaru(), 0.45f);
+		}
+
+		@Override
+		protected ResourceLocation getEntityTexture(EntityNinken entity) {
+			return TEXTURE;
+		}
+
+		@Override
+		protected void preRenderCallback(EntityNinken entity, float partialTickTime) {
+			float scale = 0.76f + entity.getMastery() * 0.24f;
+			GlStateManager.scale(scale, scale, scale);
+		}
+	}
+
+	@SideOnly(Side.CLIENT)
+	public static class ModelAkamaru extends ModelBase {
+		public final ModelRenderer root;
+		public final ModelRenderer body;
+		public final ModelRenderer chest;
+		public final ModelRenderer neckFluff;
+		public final ModelRenderer collar;
+		public final ModelRenderer head;
+		public final ModelRenderer muzzle;
+		public final ModelRenderer jaw;
+		public final ModelRenderer nose;
+		public final ModelRenderer earLeft;
+		public final ModelRenderer earRight;
+		public final ModelRenderer earLowerLeft;
+		public final ModelRenderer earLowerRight;
+		public final ModelRenderer crest;
+		public final ModelRenderer cheekLeft;
+		public final ModelRenderer cheekRight;
+		public final ModelRenderer frontLegLeft;
+		public final ModelRenderer frontLegRight;
+		public final ModelRenderer rearLegLeft;
+		public final ModelRenderer rearLegRight;
+		public final ModelRenderer frontLowerLeft;
+		public final ModelRenderer frontLowerRight;
+		public final ModelRenderer rearLowerLeft;
+		public final ModelRenderer rearLowerRight;
+		public final ModelRenderer tail;
+		public final ModelRenderer tailTip;
+
+		public ModelAkamaru() {
+			this.textureWidth = 128;
+			this.textureHeight = 128;
+
+			this.root = new ModelRenderer(this);
+			this.root.setRotationPoint(0f, 24f, 0f);
+
+			this.body = new ModelRenderer(this);
+			this.body.setRotationPoint(0f, -12f, 2f);
+			this.body.cubeList.add(new ModelBox(this.body, 33, 17, -5.5f, -3.5f, -8f, 11, 7, 6, 0.18f, false));
+			this.body.cubeList.add(new ModelBox(this.body, 35, 0, -6f, -4f, -3f, 12, 8, 7, 0.22f, false));
+			this.body.cubeList.add(new ModelBox(this.body, 68, 17, -5.5f, -3.5f, 4f, 11, 7, 5, 0.18f, false));
+			this.root.addChild(this.body);
+
+			this.chest = new ModelRenderer(this);
+			this.chest.setRotationPoint(0f, -1f, -7f);
+			this.chest.cubeList.add(new ModelBox(this.chest, 0, 17, -4.5f, -5f, -3.5f, 9, 7, 7, 0.28f, false));
+			this.chest.cubeList.add(new ModelBox(this.chest, 0, 44, -4f, 1f, -3f, 8, 4, 6, 0.15f, false));
+			this.body.addChild(this.chest);
+
+			this.neckFluff = new ModelRenderer(this);
+			this.neckFluff.setRotationPoint(0f, -2f, -2f);
+			this.neckFluff.cubeList.add(new ModelBox(this.neckFluff, 74, 0, -5f, -3.5f, -3.5f, 10, 7, 7, 0.32f, false));
+			this.chest.addChild(this.neckFluff);
+
+			this.collar = new ModelRenderer(this);
+			this.collar.setRotationPoint(0f, -1.8f, -3.1f);
+			this.collar.cubeList.add(new ModelBox(this.collar, 74, 32, -6f, -1f, -4f, 12, 2, 8, 0.48f, false));
+			this.chest.addChild(this.collar);
+
+			this.head = new ModelRenderer(this);
+			this.head.setRotationPoint(0f, -5f, -4.5f);
+			this.head.cubeList.add(new ModelBox(this.head, 0, 0, -4.5f, -5f, -5f, 9, 8, 8, 0.16f, false));
+			this.head.cubeList.add(new ModelBox(this.head, 101, 17, -4f, -3.5f, -7f, 8, 7, 4, 0.12f, false));
+			this.chest.addChild(this.head);
+
+			this.muzzle = new ModelRenderer(this);
+			this.muzzle.setRotationPoint(0f, 0f, -6.5f);
+			this.muzzle.cubeList.add(new ModelBox(this.muzzle, 81, 44, -3f, -1.5f, -5f, 6, 3, 5, 0.12f, false));
+			this.head.addChild(this.muzzle);
+
+			this.jaw = new ModelRenderer(this);
+			this.jaw.setRotationPoint(0f, 1.6f, -1f);
+			this.jaw.cubeList.add(new ModelBox(this.jaw, 73, 55, -3.5f, 0f, -4f, 7, 2, 4, 0f, false));
+			this.muzzle.addChild(this.jaw);
+
+			this.nose = new ModelRenderer(this);
+			this.nose.setRotationPoint(0f, -0.4f, -4.8f);
+			this.nose.cubeList.add(new ModelBox(this.nose, 5, 64, -2f, -1.5f, -1.5f, 4, 3, 2, 0.15f, false));
+			this.muzzle.addChild(this.nose);
+
+			this.earLeft = this.ear(this.head, -4.4f, -3.8f, -2.3f, false);
+			this.earRight = this.ear(this.head, 4.4f, -3.8f, -2.3f, true);
+			this.earLowerLeft = this.lowerEar(this.earLeft, -0.2f, -5.5f, -0.15f, false);
+			this.earLowerRight = this.lowerEar(this.earRight, 0.2f, -5.5f, -0.15f, true);
+
+			this.crest = new ModelRenderer(this);
+			this.crest.setRotationPoint(0f, -5f, -1.2f);
+			this.crest.rotateAngleX = -0.12f;
+			this.crest.cubeList.add(new ModelBox(this.crest, 0, 32, -1.5f, -4f, -3.5f, 3, 4, 7, 0.25f, false));
+			this.head.addChild(this.crest);
+
+			this.cheekLeft = this.cheek(this.head, -4.7f, 0f, -3.5f, false);
+			this.cheekRight = this.cheek(this.head, 4.7f, 0f, -3.5f, true);
+
+			this.frontLegLeft = this.upperLeg(this.body, -4.2f, 3f, -5.5f, false);
+			this.frontLegRight = this.upperLeg(this.body, 4.2f, 3f, -5.5f, true);
+			this.rearLegLeft = this.upperLeg(this.body, -4.2f, 3f, 5.3f, false);
+			this.rearLegRight = this.upperLeg(this.body, 4.2f, 3f, 5.3f, true);
+			this.frontLowerLeft = this.lowerLeg(this.frontLegLeft, 0f, 4.2f, 0f, false);
+			this.frontLowerRight = this.lowerLeg(this.frontLegRight, 0f, 4.2f, 0f, true);
+			this.rearLowerLeft = this.lowerLeg(this.rearLegLeft, 0f, 4.2f, 0f, false);
+			this.rearLowerRight = this.lowerLeg(this.rearLegRight, 0f, 4.2f, 0f, true);
+
+			// Overlapping fur plates reproduce the layered silhouette of the reference
+			// model while every piece remains attached to an animated parent bone.
+			this.furLayer(this.chest, 50, 44, 0f, -4.9f, -0.5f, -4f, -0.5f, -3.5f,
+			 8, 1, 7, -0.18f, 0f, 0f, false);
+			this.furLayer(this.chest, 40, 32, -4.2f, -2.2f, -0.8f, -2f, -1.5f, -3f,
+			 2, 5, 6, 0f, -0.10f, 0.28f, false);
+			this.furLayer(this.chest, 40, 32, 4.2f, -2.2f, -0.8f, 0f, -1.5f, -3f,
+			 2, 5, 6, 0f, 0.10f, -0.28f, true);
+			this.furLayer(this.body, 57, 32, -5.0f, -1.0f, -5.3f, -2f, -2.5f, -3f,
+			 2, 5, 6, 0.10f, -0.12f, 0.24f, false);
+			this.furLayer(this.body, 57, 32, 5.0f, -1.0f, -5.3f, 0f, -2.5f, -3f,
+			 2, 5, 6, 0.10f, 0.12f, -0.24f, true);
+			this.furLayer(this.body, 96, 55, 0f, -4.1f, -3.5f, -3f, -0.5f, -2.5f,
+			 6, 1, 5, -0.22f, 0f, 0f, false);
+			this.furLayer(this.body, 96, 55, 0f, -4.3f, 0.2f, -3f, -0.5f, -2.5f,
+			 6, 1, 5, -0.05f, 0f, 0f, false);
+			this.furLayer(this.body, 96, 55, 0f, -4.0f, 3.8f, -3f, -0.5f, -2.5f,
+			 6, 1, 5, 0.16f, 0f, 0f, false);
+			this.furLayer(this.body, 21, 32, -5.0f, -0.4f, 4.4f, -2f, -2f, -3.5f,
+			 2, 4, 7, -0.08f, -0.12f, 0.22f, false);
+			this.furLayer(this.body, 21, 32, 5.0f, -0.4f, 4.4f, 0f, -2f, -3.5f,
+			 2, 4, 7, -0.08f, 0.12f, -0.22f, true);
+			this.furLayer(this.chest, 0, 64, -1.7f, 3.0f, -3.1f, -0.5f, 0f, -0.5f,
+			 1, 5, 1, -0.34f, 0f, 0.26f, false);
+			this.furLayer(this.chest, 0, 64, 0f, 3.2f, -3.3f, -0.5f, 0f, -0.5f,
+			 1, 5, 1, -0.38f, 0f, 0f, false);
+			this.furLayer(this.chest, 0, 64, 1.7f, 3.0f, -3.1f, -0.5f, 0f, -0.5f,
+			 1, 5, 1, -0.34f, 0f, -0.26f, true);
+			this.furLayer(this.frontLowerLeft, 34, 64, 0f, 1.0f, 0f, -1.5f, -0.5f, -1.5f,
+			 3, 1, 3, 0f, 0f, 0f, false);
+			this.furLayer(this.frontLowerRight, 34, 64, 0f, 1.0f, 0f, -1.5f, -0.5f, -1.5f,
+			 3, 1, 3, 0f, 0f, 0f, true);
+			this.furLayer(this.rearLowerLeft, 34, 64, 0f, 1.0f, 0f, -1.5f, -0.5f, -1.5f,
+			 3, 1, 3, 0f, 0f, 0f, false);
+			this.furLayer(this.rearLowerRight, 34, 64, 0f, 1.0f, 0f, -1.5f, -0.5f, -1.5f,
+			 3, 1, 3, 0f, 0f, 0f, true);
+
+			this.tail = new ModelRenderer(this);
+			this.tail.setRotationPoint(0f, -2.3f, 7.5f);
+			this.tail.rotateAngleX = -0.78f;
+			this.tail.cubeList.add(new ModelBox(this.tail, 29, 44, -1.5f, -1.5f, 0f, 3, 3, 7, 0.22f, false));
+			this.body.addChild(this.tail);
+
+			this.tailTip = new ModelRenderer(this);
+			this.tailTip.setRotationPoint(0f, 0f, 6.4f);
+			this.tailTip.rotateAngleX = -0.72f;
+			this.tailTip.cubeList.add(new ModelBox(this.tailTip, 0, 55, -1.5f, -1f, 0f, 3, 2, 6, 0.18f, false));
+			this.tail.addChild(this.tailTip);
+			ModelRenderer tailEnd = new ModelRenderer(this);
+			tailEnd.setRotationPoint(0f, 0f, 5.4f);
+			tailEnd.rotateAngleX = -0.55f;
+			tailEnd.cubeList.add(new ModelBox(tailEnd, 51, 55, -1f, -1f, 0f, 2, 2, 5, 0.12f, false));
+			this.tailTip.addChild(tailEnd);
+			this.furLayer(this.tail, 104, 44, -0.65f, 0f, 0.4f, -1.5f, -0.5f, -0.5f,
+			 3, 1, 7, 0f, -0.18f, 0f, false);
+			this.furLayer(this.tail, 104, 44, 0.65f, 0f, 0.4f, -1.5f, -0.5f, -0.5f,
+			 3, 1, 7, 0f, 0.18f, 0f, true);
+		}
+
+		private ModelRenderer furLayer(ModelRenderer parent, int textureU, int textureV,
+		 float pointX, float pointY, float pointZ, float cubeX, float cubeY, float cubeZ,
+		 int width, int height, int depth, float rotateX, float rotateY, float rotateZ, boolean mirror) {
+			ModelRenderer layer = new ModelRenderer(this);
+			layer.setRotationPoint(pointX, pointY, pointZ);
+			layer.rotateAngleX = rotateX;
+			layer.rotateAngleY = rotateY;
+			layer.rotateAngleZ = rotateZ;
+			layer.cubeList.add(new ModelBox(layer, textureU, textureV, cubeX, cubeY, cubeZ,
+			 width, height, depth, 0.08f, mirror));
+			parent.addChild(layer);
+			return layer;
+		}
+
+		private ModelRenderer ear(ModelRenderer parent, float x, float y, float z, boolean mirror) {
+			ModelRenderer part = new ModelRenderer(this);
+			part.setRotationPoint(x, y, z);
+			part.rotateAngleZ = mirror ? -0.12f : 0.12f;
+			part.rotateAngleX = -0.10f;
+			part.cubeList.add(new ModelBox(part, 66, 55, mirror ? -1.8f : -0.2f, -6f, -0.5f, 2, 6, 1, 0.12f, mirror));
+			parent.addChild(part);
+			return part;
+		}
+
+		private ModelRenderer lowerEar(ModelRenderer parent, float x, float y, float z, boolean mirror) {
+			ModelRenderer part = new ModelRenderer(this);
+			part.setRotationPoint(x, y, z);
+			part.rotateAngleZ = mirror ? 0.08f : -0.08f;
+			part.cubeList.add(new ModelBox(part, 27, 64, mirror ? -1.8f : -0.2f, 0f, -0.5f, 2, 4, 1, 0.08f, mirror));
+			parent.addChild(part);
+			return part;
+		}
+
+		private ModelRenderer cheek(ModelRenderer parent, float x, float y, float z, boolean mirror) {
+			ModelRenderer part = new ModelRenderer(this);
+			part.setRotationPoint(x, y, z);
+			part.rotateAngleZ = mirror ? -0.18f : 0.18f;
+			part.cubeList.add(new ModelBox(part, 18, 64, mirror ? -1.8f : -0.2f, -1.5f, -1f, 2, 3, 2, 0.16f, mirror));
+			parent.addChild(part);
+			return part;
+		}
+
+		private ModelRenderer upperLeg(ModelRenderer parent, float x, float y, float z, boolean mirror) {
+			ModelRenderer part = new ModelRenderer(this);
+			part.setRotationPoint(x, y, z);
+			part.cubeList.add(new ModelBox(part, 19, 55, -1.5f, -0.5f, -1.5f, 3, 5, 3, 0.18f, mirror));
+			parent.addChild(part);
+			return part;
+		}
+
+		private ModelRenderer lowerLeg(ModelRenderer parent, float x, float y, float z, boolean mirror) {
+			ModelRenderer part = new ModelRenderer(this);
+			part.setRotationPoint(x, y, z);
+			part.cubeList.add(new ModelBox(part, 119, 55, -1f, 0f, -1f, 2, 4, 2, 0.12f, mirror));
+			ModelRenderer paw = new ModelRenderer(this);
+			paw.setRotationPoint(0f, 3.4f, -0.8f);
+			paw.cubeList.add(new ModelBox(paw, 32, 55, -1.75f, 0f, -2.5f, 4, 2, 5, 0.14f, mirror));
+			part.addChild(paw);
+			parent.addChild(part);
+			return part;
+		}
+
+		@Override
+		public void render(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+		 float netHeadYaw, float headPitch, float scale) {
+			this.root.render(scale);
+		}
+
+		@Override
+		public void setRotationAngles(float limbSwing, float limbSwingAmount, float ageInTicks,
+		 float netHeadYaw, float headPitch, float scaleFactor, Entity entity) {
+			EntityNinken dog = (EntityNinken)entity;
+			this.head.rotateAngleY = netHeadYaw * 0.017453292f;
+			this.head.rotateAngleX = headPitch * 0.017453292f;
+			this.body.rotateAngleX = 0f;
+			this.chest.rotateAngleX = 0f;
+			this.jaw.rotateAngleX = this.swingProgress > 0f ? 0.48f : 0f;
+			float earSway = MathHelper.sin(ageInTicks * 0.12f) * 0.055f;
+			this.earLeft.rotateAngleZ = 0.12f + earSway;
+			this.earRight.rotateAngleZ = -0.12f - earSway;
+			this.tail.rotateAngleY = MathHelper.cos(ageInTicks * 0.28f) * (dog.isSitting() ? 0.12f : 0.32f);
+			this.tail.rotateAngleX = -0.78f;
+			this.tailTip.rotateAngleX = -0.72f;
+
+			float gait = MathHelper.cos(limbSwing * 0.6662f) * 1.15f * limbSwingAmount;
+			this.frontLegLeft.rotateAngleX = gait;
+			this.rearLegRight.rotateAngleX = gait;
+			this.frontLegRight.rotateAngleX = -gait;
+			this.rearLegLeft.rotateAngleX = -gait;
+			this.frontLowerLeft.rotateAngleX = -Math.max(0f, gait) * 0.45f;
+			this.rearLowerRight.rotateAngleX = -Math.max(0f, gait) * 0.45f;
+			this.frontLowerRight.rotateAngleX = Math.min(0f, gait) * 0.45f;
+			this.rearLowerLeft.rotateAngleX = Math.min(0f, gait) * 0.45f;
+
+			if (dog.isSitting()) {
+				this.body.rotateAngleX = -0.12f;
+				this.chest.rotateAngleX = 0.12f;
+				this.frontLegLeft.rotateAngleX = -0.08f;
+				this.frontLegRight.rotateAngleX = -0.08f;
+				this.rearLegLeft.rotateAngleX = -1.15f;
+				this.rearLegRight.rotateAngleX = -1.15f;
+				this.rearLowerLeft.rotateAngleX = 1.30f;
+				this.rearLowerRight.rotateAngleX = 1.30f;
+				this.tail.rotateAngleX = -0.35f;
+			} else if (!dog.onGround) {
+				this.body.rotateAngleX = -0.12f;
+				this.frontLegLeft.rotateAngleX = -0.65f;
+				this.frontLegRight.rotateAngleX = -0.65f;
+				this.rearLegLeft.rotateAngleX = 0.85f;
+				this.rearLegRight.rotateAngleX = 0.85f;
+				this.rearLowerLeft.rotateAngleX = -1.0f;
+				this.rearLowerRight.rotateAngleX = -1.0f;
+			}
+		}
+	}
+
 	public static class EntityNinken extends EntityWolf implements ItemJutsu.IJutsu {
 		private float mastery;
 
@@ -173,6 +477,10 @@ public class ItemInuzuka extends ElementsNarutomodMod.ModElement {
 				this.setHealth(this.getMaxHealth());
 			}
 			this.setAIMoveSpeed((float)speed.getBaseValue());
+		}
+
+		public float getMastery() {
+			return this.mastery;
 		}
 
 		@Override

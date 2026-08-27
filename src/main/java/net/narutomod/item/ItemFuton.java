@@ -47,6 +47,8 @@ public class ItemFuton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum BIGBLOW = new ItemJutsu.JutsuEnum(3, "futon_great_breakthrough", 'C', 20d, new EntityFutonGreatBreakthrough.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum WINDBLADE = new ItemJutsu.JutsuEnum(4, "wind_blade", 'A', 40d, new EntityWindBlade.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum VACWAVE = new ItemJutsu.JutsuEnum(5, "vacuum_wave", 'B', 30d, new EntityVacuumWave.EC.Jutsu());
+	public static final ItemJutsu.JutsuEnum BEASTTEARINGGALEPALM = new ItemJutsu.JutsuEnum(6, "beast_tearing_gale_palm", 'C', 55d, new ItemCanonicalJutsu.BeastTearingGalePalm()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum FLOWERSCATTERINGDANCE = new ItemJutsu.JutsuEnum(7, "flower_scattering_dance", 'B', 85d, new ItemCanonicalJutsu.FlowerScatteringDance()).withCustomBalance();
 
 	public ItemFuton(ElementsNarutomodMod instance) {
 		super(instance, 376);
@@ -54,7 +56,7 @@ public class ItemFuton extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(CHAKRAFLOW, RASENSHURIKEN, VACUUMS, BIGBLOW, WINDBLADE, VACWAVE));
+		elements.items.add(() -> new RangedItem(CHAKRAFLOW, RASENSHURIKEN, VACUUMS, BIGBLOW, WINDBLADE, VACWAVE, BEASTTEARINGGALEPALM, FLOWERSCATTERINGDANCE));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(ChakraFlow.class)
 		  .id(new ResourceLocation("narutomod", "futonchakraflow"), ENTITYID).name("futonchakraflow").tracker(64, 1, true).build());
 	}

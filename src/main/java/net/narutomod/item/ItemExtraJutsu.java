@@ -3,8 +3,10 @@ package net.narutomod.item;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.common.registry.EntityEntryBuilder;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
+import net.minecraftforge.common.MinecraftForge;
 
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.entity.Entity;
@@ -64,6 +66,7 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 	private static final int FIRE_DRAGON_HEAD_ID = 9315;
 	private static final int WATER_PRISON_TRAP_CLONE_ID = 9316;
 	private static final int WATER_PRISON_TRAP_ID = 9317;
+	private static final int EXPLOSIVE_BUBBLE_ID = 9318;
 
 	public ItemExtraJutsu(ElementsNarutomodMod instance) {
 		super(instance, 1009);
@@ -87,6 +90,13 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 		 .id(new ResourceLocation("narutomod", "water_prison_trap_clone"), WATER_PRISON_TRAP_CLONE_ID).name("water_prison_trap_clone").tracker(64, 3, true).build());
 		this.elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityWaterPrisonTrap.class)
 		 .id(new ResourceLocation("narutomod", "water_prison_trap"), WATER_PRISON_TRAP_ID).name("water_prison_trap").tracker(64, 3, true).build());
+		this.elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityBubbleBomb.class)
+		 .id(new ResourceLocation("narutomod", "explosive_water_bubble"), EXPLOSIVE_BUBBLE_ID).name("explosive_water_bubble").tracker(64, 1, true).build());
+	}
+
+	@Override
+	public void init(FMLInitializationEvent event) {
+		MinecraftForge.EVENT_BUS.register(new ItemCanonicalJutsu.Hooks());
 	}
 
 	@Override
@@ -106,6 +116,11 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 		 renderManager -> new RenderFireDragonHead(renderManager));
 		RenderingRegistry.registerEntityRenderingHandler(EntityWaterPrisonTrapClone.class,
 		 renderManager -> EntityClone.ClientRLM.getInstance().new RenderClone(renderManager));
+		RenderingRegistry.registerEntityRenderingHandler(EntityBubbleBomb.class,
+		 renderManager -> new Render<EntityBubbleBomb>(renderManager) {
+			@Override public void doRender(EntityBubbleBomb entity, double x, double y, double z, float yaw, float partialTicks) { }
+			@Override protected ResourceLocation getEntityTexture(EntityBubbleBomb entity) { return TextureMap.LOCATION_BLOCKS_TEXTURE; }
+		 });
 	}
 
 	private static EntityLivingBase getLookTarget(EntityLivingBase entity, double range, double grow) {
@@ -881,6 +896,8 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 				this.world.newExplosion(this.shootingEntity, this.posX, this.posY, this.posZ,
 				 5.0F * size, false,
 				 net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this.shootingEntity));
+				CustomJutsuEffects.impact(this.world, this.getPositionVector(), 0xC8FF4A00,
+				 Math.max(3.0f, size * 4.0f), 14, 3.2f);
 				this.setDead();
 			}
 		}
@@ -888,6 +905,110 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 		@Override
 		public ItemJutsu.JutsuEnum.Type getJutsuType() {
 			return ItemJutsu.JutsuEnum.Type.KATON;
+		}
+	}
+
+	/** Particle-rendered homing bubble used by Water Release: Bubbles Technique. */
+	public static class EntityBubbleBomb extends Entity {
+		private EntityLivingBase owner;
+		private EntityLivingBase target;
+		private int ownerId = -1;
+		private int targetId = -1;
+		private int fuse = 30;
+		private float damage = 4f;
+
+		public EntityBubbleBomb(World world) {
+			super(world);
+			this.setSize(0.65f, 0.65f);
+			this.noClip = true;
+		}
+
+		public EntityBubbleBomb(World world, EntityLivingBase ownerIn, EntityLivingBase targetIn, int fuseIn, float damageIn) {
+			this(world);
+			this.owner = ownerIn;
+			this.target = targetIn;
+			this.ownerId = ownerIn != null ? ownerIn.getEntityId() : -1;
+			this.targetId = targetIn != null ? targetIn.getEntityId() : -1;
+			this.fuse = Math.max(10, fuseIn);
+			this.damage = Math.max(1f, damageIn);
+		}
+
+		@Override protected void entityInit() { }
+
+		private EntityLivingBase getOwner() {
+			if (this.owner == null && this.ownerId >= 0 && this.world.getEntityByID(this.ownerId) instanceof EntityLivingBase) {
+				this.owner = (EntityLivingBase)this.world.getEntityByID(this.ownerId);
+			}
+			return this.owner;
+		}
+
+		private EntityLivingBase getTarget() {
+			if (this.target == null && this.targetId >= 0 && this.world.getEntityByID(this.targetId) instanceof EntityLivingBase) {
+				this.target = (EntityLivingBase)this.world.getEntityByID(this.targetId);
+			}
+			return this.target;
+		}
+
+		@Override
+		public void onUpdate() {
+			super.onUpdate();
+			if (this.world.isRemote) return;
+			EntityLivingBase victim = this.getTarget();
+			if (victim != null && victim.isEntityAlive()) {
+				Vec3d wanted = victim.getPositionEyes(1f).subtract(this.getPositionVector());
+				double distance = wanted.lengthVector();
+				if (distance < 0.8d) {
+					this.detonate();
+					return;
+				}
+				Vec3d direction = wanted.normalize();
+				this.motionX = this.motionX * 0.72d + direction.x * 0.16d;
+				this.motionY = this.motionY * 0.72d + direction.y * 0.16d;
+				this.motionZ = this.motionZ * 0.72d + direction.z * 0.16d;
+			} else {
+				this.motionY = 0.025d + Math.sin(this.ticksExisted * 0.35d) * 0.012d;
+			}
+			this.move(net.minecraft.entity.MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+			Particles.spawnParticle(this.world, Particles.Types.WATER_SPLASH, this.posX, this.posY, this.posZ,
+			 8, 0.24d, 0.24d, 0.24d, 0d, 0.015d, 0d, 0xB070D8FF, 18);
+			Particles.spawnParticle(this.world, Particles.Types.EXPANDING_SPHERE, this.posX, this.posY, this.posZ,
+			 1, 0d, 0d, 0d, 0d, 0d, 0d, 9, 5, 0x6070D8FF);
+			if (this.ticksExisted >= this.fuse) this.detonate();
+		}
+
+		private void detonate() {
+			if (this.isDead) return;
+			EntityLivingBase caster = this.getOwner();
+			for (EntityLivingBase living : this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().grow(2.2d))) {
+				if (living.equals(caster) || !ItemJutsu.canTarget(living) || (caster != null && caster.isOnSameTeam(living))) continue;
+				living.hurtResistantTime = 0;
+				living.attackEntityFrom(ItemJutsu.causeJutsuDamage(this, caster), this.damage);
+				Vec3d away = living.getPositionVector().subtract(this.getPositionVector()).normalize();
+				ProcedureUtils.addVelocity(living, away.x * 0.35d, 0.22d, away.z * 0.35d);
+			}
+			Particles.spawnParticle(this.world, Particles.Types.WATER_SPLASH, this.posX, this.posY, this.posZ,
+			 65, 1.1d, 0.8d, 1.1d, 0d, 0.14d, 0d, 0xD080E8FF, 25);
+			Particles.spawnParticle(this.world, Particles.Types.EXPANDING_SPHERE, this.posX, this.posY, this.posZ,
+			 1, 0d, 0d, 0d, 0d, 0d, 0d, 28, 10, 0x9080E8FF);
+			this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_PLAYER_SPLASH,
+			 SoundCategory.PLAYERS, 1.1f, 1.35f);
+			net.narutomod.procedure.ProcedureCameraShake.sendToClients(this.world.provider.getDimension(),
+			 this.posX, this.posY, this.posZ, 14d, 6, 0.7f);
+			this.setDead();
+		}
+
+		@Override protected void readEntityFromNBT(NBTTagCompound compound) {
+			this.ownerId = compound.getInteger("ownerId");
+			this.targetId = compound.getInteger("targetId");
+			this.fuse = compound.getInteger("fuse");
+			this.damage = compound.getFloat("damage");
+		}
+
+		@Override protected void writeEntityToNBT(NBTTagCompound compound) {
+			compound.setInteger("ownerId", this.ownerId);
+			compound.setInteger("targetId", this.targetId);
+			compound.setInteger("fuse", this.fuse);
+			compound.setFloat("damage", this.damage);
 		}
 	}
 

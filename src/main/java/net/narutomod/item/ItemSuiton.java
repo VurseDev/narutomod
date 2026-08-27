@@ -51,10 +51,16 @@ public class ItemSuiton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum WATERSHOCK = new ItemJutsu.JutsuEnum(5, "water_shockwave", 'B', 30d, new EntityWaterShockwave.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum WATERBOMB = new ItemJutsu.JutsuEnum(6, "water_canonball", 'C', 30d, new EntityWaterCanonball.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum ACIDSPIT = new ItemJutsu.JutsuEnum(7, "acid_scattering", 'A', 20d, new EntityAcidScattering.EC.Jutsu());
-	public static final ItemJutsu.JutsuEnum WATERCLONE = new ItemJutsu.JutsuEnum(8, "water_clone", 'C', 70d, new ItemExtraJutsu.WaterCloneJutsu());
-	public static final ItemJutsu.JutsuEnum MIZUAMENABARA = new ItemJutsu.JutsuEnum(9, "mizuame_nabara", 'C', 45d, new ItemExtraJutsu.StickySyrupJutsu());
-	public static final ItemJutsu.JutsuEnum WATERWALL = new ItemJutsu.JutsuEnum(10, "water_wall", 'C', 65d, new ItemExtraJutsu.WaterWallJutsu());
-	public static final ItemJutsu.JutsuEnum WATERPRISONTRAP = new ItemJutsu.JutsuEnum(11, "water_prison_trap", 'B', 120d, new ItemExtraJutsu.WaterPrisonTrapJutsu());
+	public static final ItemJutsu.JutsuEnum WATERCLONE = new ItemJutsu.JutsuEnum(8, "water_clone", 'C', 70d, new ItemExtraJutsu.WaterCloneJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum MIZUAMENABARA = new ItemJutsu.JutsuEnum(9, "mizuame_nabara", 'C', 45d, new ItemExtraJutsu.StickySyrupJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum WATERWALL = new ItemJutsu.JutsuEnum(10, "water_wall", 'C', 65d, new ItemExtraJutsu.WaterWallJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum WATERPRISONTRAP = new ItemJutsu.JutsuEnum(11, "water_prison_trap", 'B', 120d, new ItemExtraJutsu.WaterPrisonTrapJutsu()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum WATERWHIP = new ItemJutsu.JutsuEnum(12, "water_whip", 'C', 55d, new ItemCanonicalJutsu.WaterWhip()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum HIDINGINWATER = new ItemJutsu.JutsuEnum(13, "hiding_in_water", 'C', 45d, new ItemCanonicalJutsu.HidingInWater()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum WATERMIRROR = new ItemJutsu.JutsuEnum(14, "water_mirror", 'A', 140d, new ItemCanonicalJutsu.WaterMirror()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum WATERBLADE = new ItemJutsu.JutsuEnum(15, "water_blade", 'B', 80d, new ItemCanonicalJutsu.WaterBlade()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum EXPLOSIVEBUBBLES = new ItemJutsu.JutsuEnum(16, "explosive_bubbles", 'A', 125d, new ItemCanonicalJutsu.ExplosiveBubbles()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum WATERFORMATIONPILLAR = new ItemJutsu.JutsuEnum(17, "water_formation_pillar", 'A', 150d, new ItemCanonicalJutsu.WaterFormationPillar()).withCustomBalance();
 
 	public ItemSuiton(ElementsNarutomodMod instance) {
 		super(instance, 368);
@@ -62,7 +68,7 @@ public class ItemSuiton extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(HIDINGINMIST, WATERBULLET, WATERDRAGON, WATERPRISON, WATERSHARK, WATERSHOCK, WATERBOMB, ACIDSPIT, WATERCLONE, MIZUAMENABARA, WATERWALL, WATERPRISONTRAP));
+		elements.items.add(() -> new RangedItem(HIDINGINMIST, WATERBULLET, WATERDRAGON, WATERPRISON, WATERSHARK, WATERSHOCK, WATERBOMB, ACIDSPIT, WATERCLONE, MIZUAMENABARA, WATERWALL, WATERPRISONTRAP, WATERWHIP, HIDINGINWATER, WATERMIRROR, WATERBLADE, EXPLOSIVEBUBBLES, WATERFORMATIONPILLAR));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityMist.class)
 				.id(new ResourceLocation("narutomod", "suitonmist"), ENTITYID).name("suitonmist").tracker(64, 1, true).build());
 	}

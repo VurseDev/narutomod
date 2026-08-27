@@ -147,6 +147,8 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 	public static class ClientModel {
 		@SideOnly(Side.CLIENT)
 		public class ModelHelmetSnug extends ModelBiped {
+			/** Eye textures live under this head-local anchor so fitting follows head rotation. */
+			protected final ModelRenderer eyeLayer;
 			protected final ModelRenderer onface;
 			protected final ModelRenderer hornRight;
 			protected final ModelRenderer hornLeft;
@@ -158,6 +160,11 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 			protected boolean headwearShine;
 			protected boolean highlightHide;
 			protected boolean foreheadHide;
+			public float eyeOffsetX;
+			public float eyeOffsetY;
+			public float eyeOffsetZ;
+			public float eyeScaleX = 1.0F;
+			public float eyeScaleY = 1.0F;
 	
 			public ModelHelmetSnug() {
 				this.textureWidth = 64;
@@ -165,11 +172,15 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 
 				bipedHead = new ModelRenderer(this);
 				bipedHead.setRotationPoint(0.0F, 0.0F, 0.0F);
-				bipedHead.cubeList.add(new ModelBox(this.bipedHead, 0, 0, -4.0F, -8.0F, -4.0F, 8, 8, 8, 0.01F, false));
+
+				eyeLayer = new ModelRenderer(this);
+				eyeLayer.setRotationPoint(0.0F, 0.0F, 0.0F);
+				bipedHead.addChild(eyeLayer);
+				eyeLayer.cubeList.add(new ModelBox(this.eyeLayer, 0, 0, -4.0F, -8.0F, -4.0F, 8, 8, 8, 0.01F, false));
 
 				onface = new ModelRenderer(this);
 				onface.setRotationPoint(0.0F, 0.0F, 0.0F);
-				bipedHead.addChild(onface);
+				eyeLayer.addChild(onface);
 				onface.cubeList.add(new ModelBox(onface, 32, 0, -4.0F, -8.0F, -4.0F, 8, 8, 8, 0.1F, false));
 
 				hornRight = new ModelRenderer(this);
@@ -284,6 +295,10 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 				if (entityIn.isSneaking()) {
 					GlStateManager.translate(0.0F, 0.2F, 0.0F);
 				}
+				// The fitting anchor is a child of bipedHead. Its translation is
+				// therefore applied after head yaw/pitch, keeping the eyes attached
+				// to the skin instead of drifting in world/model space.
+				this.eyeLayer.setRotationPoint(this.eyeOffsetX, this.eyeOffsetY, this.eyeOffsetZ);
 				if (!this.headHide) {
 					this.bipedHead.render(scale);
 				}
@@ -303,19 +318,41 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 					if (!this.highlightHide) {
 						GlStateManager.disableLighting();
 						OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
-						this.copyModelAngles(this.bipedHead, this.highlight);
-						this.highlight.render(scale);
+						this.renderFittedHeadPart(this.highlight, scale);
 						int i = entityIn.getBrightnessForRender();
 						OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)(i % 65536), (float)(i / 65536));
 						GlStateManager.enableLighting();
 					}
 					if (!this.foreheadHide) {
-						this.copyModelAngles(this.bipedHead, this.forehead);
-						this.forehead.render(scale);
+						this.renderFittedHeadPart(this.forehead, scale);
 					}
 				}
 				GlStateManager.alphaFunc(0x204, 0.1f);
 				GlStateManager.disableBlend();
+				GlStateManager.popMatrix();
+			}
+
+			/**
+			 * Renders zero-pivot overlay planes in the already-rotated local head
+			 * coordinate system. This is used for the glowing iris/highlight layer,
+			 * which is intentionally rendered separately for full-bright lighting.
+			 */
+			private void renderFittedHeadPart(ModelRenderer part, float scale) {
+				GlStateManager.pushMatrix();
+				GlStateManager.translate(this.bipedHead.rotationPointX * scale,
+					this.bipedHead.rotationPointY * scale, this.bipedHead.rotationPointZ * scale);
+				if (this.bipedHead.rotateAngleZ != 0.0F) {
+					GlStateManager.rotate(this.bipedHead.rotateAngleZ * (180F / (float)Math.PI), 0.0F, 0.0F, 1.0F);
+				}
+				if (this.bipedHead.rotateAngleY != 0.0F) {
+					GlStateManager.rotate(this.bipedHead.rotateAngleY * (180F / (float)Math.PI), 0.0F, 1.0F, 0.0F);
+				}
+				if (this.bipedHead.rotateAngleX != 0.0F) {
+					GlStateManager.rotate(this.bipedHead.rotateAngleX * (180F / (float)Math.PI), 1.0F, 0.0F, 0.0F);
+				}
+				GlStateManager.translate(this.eyeOffsetX * scale, this.eyeOffsetY * scale, this.eyeOffsetZ * scale);
+				GlStateManager.scale(this.eyeScaleX, this.eyeScaleY, 1.0F);
+				part.render(scale);
 				GlStateManager.popMatrix();
 			}
 
