@@ -80,6 +80,9 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 		ProcedureOnLeftClickEmpty.addQualifiedItem(block, EnumHand.MAIN_HAND);
 		ProcedureOnLeftClickEmpty.addQualifiedItem(block, EnumHand.OFF_HAND);
 		MinecraftForge.EVENT_BUS.register(new CombatHooks());
+		// The beta's improved combat presentation is server-driven so every
+		// connected player sees the same dash, lift, strikes and impact.
+		CinematicTaijutsu.register();
 	}
 
 	public static class RangedItem extends ItemJutsu.Base {
@@ -138,6 +141,14 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 			}
 			EntityPlayer player = (EntityPlayer)entity;
 			EntityLivingBase target = this.getTarget(entity, this.range + power);
+			if (CinematicTaijutsu.isCinematic(this.effectName)) {
+				entity.swingArm(EnumHand.MAIN_HAND);
+				entity.world.playSound(null, entity.posX, entity.posY, entity.posZ, this.sound,
+				 SoundCategory.PLAYERS, target != null ? 1.2f : 0.7f, target != null ? 0.85f : 1.2f);
+				CinematicTaijutsu.start(this.effectName, entity, target, power, this.damage(entity, power));
+				this.cooldown(stack, entity);
+				return true;
+			}
 			if (target == null) {
 				this.dash(entity, power * 0.45d);
 				this.fx(entity, null, power, false);
@@ -206,6 +217,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 
 		protected void fx(EntityLivingBase entity, EntityLivingBase target, float power, boolean hit) {
 			entity.swingArm(EnumHand.MAIN_HAND);
+			CinematicTaijutsu.flash(this.effectName, entity);
 			entity.world.playSound(null, entity.posX, entity.posY, entity.posZ, this.sound, SoundCategory.PLAYERS, hit ? 1.2f : 0.7f, hit ? 0.85f : 1.2f);
 			if (hit) {
 				entity.world.playSound(null, target.posX, target.posY, target.posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.25f, 1.8f);
@@ -248,7 +260,9 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 
 		@Override
 		public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
-			this.dash(entity, 1.2d * power);
+			if (!CinematicTaijutsu.isCinematic(this.effectName)) {
+				this.dash(entity, 1.2d * power);
+			}
 			return super.createJutsu(stack, entity, power);
 		}
 
@@ -286,7 +300,7 @@ public class ItemTaijutsu extends ElementsNarutomodMod.ModElement {
 		public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
 			EntityLivingBase target = this.getTarget(entity, this.range + power);
 			boolean used = super.createJutsu(stack, entity, power);
-			if (used && target != null) {
+			if (used && target != null && !CinematicTaijutsu.isCinematic(this.effectName)) {
 				target.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, 60, 0, false, false));
 				entity.world.playSound(null, target.posX, target.posY, target.posZ,
 				 SoundEvent.REGISTRY.getObject(new ResourceLocation("narutomod:throwpunch")), SoundCategory.PLAYERS, 1.0f, 1.1f);

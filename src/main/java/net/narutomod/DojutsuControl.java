@@ -6,6 +6,7 @@ import net.narutomod.item.ItemMangekyoSharingan;
 import net.narutomod.item.ItemMangekyoSharinganEternal;
 import net.narutomod.item.ItemMangekyoSharinganObito;
 import net.narutomod.item.ItemMangekyoSharinganObitoFire;
+import net.narutomod.item.ItemNormalEyes;
 import net.narutomod.item.ItemRinnegan;
 import net.narutomod.item.ItemSharingan;
 import net.narutomod.item.ItemSharinganTomoe1;
@@ -27,6 +28,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.NonNullList;
@@ -122,6 +125,7 @@ public class DojutsuControl extends ElementsNarutomodMod.ModElement {
 
 		head = player.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
 		if (!head.isEmpty()) {
+			if (ItemNormalEyes.isNormalEyes(head)) ItemNormalEyes.rememberEquippedEyes(player, head);
 			ItemStack oldHead = head.copy();
 			player.setItemStackToSlot(EntityEquipmentSlot.HEAD, ItemStack.EMPTY);
 			moveHeadToInventory(player, oldHead);
@@ -131,8 +135,14 @@ public class DojutsuControl extends ElementsNarutomodMod.ModElement {
 		active.setCount(1);
 		setActiveTag(active, true);
 		player.setItemStackToSlot(EntityEquipmentSlot.HEAD, active);
+		ItemNormalEyes.clearMissingEyeBlindness(player);
 		player.getEntityData().setLong(ACTIVATION_COOLDOWN_TAG, player.world.getTotalWorldTime() + ACTIVATION_COOLDOWN_TICKS);
 		player.inventory.markDirty();
+		if (selected instanceof ItemSharingan.Base) {
+			SoundEvent sound = ElementsNarutomodMod.sounds.get(new ResourceLocation("narutomod", "sharingan_activate"));
+			if (sound != null) player.world.playSound(null, player.posX, player.posY, player.posZ,
+				sound, SoundCategory.PLAYERS, 0.95F, 1.0F);
+		}
 		player.sendStatusMessage(new TextComponentString(TextFormatting.RED + active.getDisplayName() + TextFormatting.WHITE + " activated."), true);
 	}
 
@@ -145,8 +155,14 @@ public class DojutsuControl extends ElementsNarutomodMod.ModElement {
 		moveHeadToInventory(player, stored);
 		player.setItemStackToSlot(EntityEquipmentSlot.HEAD, ItemStack.EMPTY);
 
-		Item fallbackItem = getInactiveFallback(active.getItem());
-		ItemStack fallback = fallbackItem != null ? takeOwnedStack(player, fallbackItem) : ItemStack.EMPTY;
+		// Normal Eyes are the persistent baseline. A dojutsu sits in the head slot
+		// while active; when it is turned off, restore the saved eyes instead of
+		// forcing an unrelated base dojutsu back on the player.
+		ItemStack fallback = ItemNormalEyes.takeNormalEyes(player);
+		if (fallback.isEmpty() && !ItemNormalEyes.hasNinjaAdvancement(player)) {
+			Item fallbackItem = getInactiveFallback(active.getItem());
+			fallback = fallbackItem != null ? takeOwnedStack(player, fallbackItem) : ItemStack.EMPTY;
+		}
 		if (!fallback.isEmpty()) {
 			ItemStack equip = fallback.copy();
 			equip.setCount(1);

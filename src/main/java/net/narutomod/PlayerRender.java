@@ -46,11 +46,13 @@ import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.model.ModelPlayer;
 import net.minecraft.client.model.ModelBiped;
+import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.Minecraft;
 
 import net.narutomod.entity.EntityShieldBase;
 import net.narutomod.item.ItemOnBody;
 import net.narutomod.item.ItemBijuCloak;
+import net.narutomod.item.CinematicTaijutsu;
 import net.narutomod.procedure.ProcedureOnLivingUpdate;
 import net.narutomod.procedure.ProcedureSync;
 import net.narutomod.procedure.ProcedureUtils;
@@ -83,6 +85,118 @@ public class PlayerRender extends ElementsNarutomodMod.ModElement {
 
 	public static PlayerRender getInstance() {
 		return INSTANCE;
+	}
+
+	/** True while a server-synchronised cinematic taijutsu sequence is active. */
+	public static boolean hasTaijutsuPose(Entity entity) {
+		return CinematicTaijutsu.getRenderSkill(entity) > 0;
+	}
+
+	@SideOnly(Side.CLIENT)
+	public static void applyTaijutsuPose(ModelBiped model, Entity entity) {
+		int skill = CinematicTaijutsu.getRenderSkill(entity);
+		int tick = CinematicTaijutsu.getRenderTick(entity);
+		if (skill == 1) {
+			dropKick(model);
+		} else if (skill == 2) {
+			if (tick < 12) spinKick(model);
+			else slamPose(model);
+		} else if (skill == 3) {
+			if (tick < 3) highKick(model, true);
+			else if (tick < 15) highKick(model, (tick / 2) % 2 == 0);
+			else slamPose(model);
+		} else if (skill == 4) {
+			if (tick < 3) highKick(model, true);
+			else lowKick(model, false);
+		} else if (skill == 5) {
+			spinKick(model);
+		} else if (skill == 6 || skill == 7) {
+			slamPose(model);
+		}
+		copyWearLayers(model);
+	}
+
+	@SideOnly(Side.CLIENT)
+	private static void highKick(ModelBiped model, boolean right) {
+		ModelRenderer kicking = right ? model.bipedRightLeg : model.bipedLeftLeg;
+		ModelRenderer planted = right ? model.bipedLeftLeg : model.bipedRightLeg;
+		ModelRenderer guard = right ? model.bipedLeftArm : model.bipedRightArm;
+		ModelRenderer counter = right ? model.bipedRightArm : model.bipedLeftArm;
+		kicking.rotateAngleX = -2.35f;
+		kicking.rotateAngleY = right ? -0.22f : 0.22f;
+		kicking.rotateAngleZ = right ? 0.15f : -0.15f;
+		planted.rotateAngleX = 0.35f;
+		guard.rotateAngleX = -0.85f;
+		guard.rotateAngleZ = right ? -0.25f : 0.25f;
+		counter.rotateAngleX = 0.55f;
+		counter.rotateAngleZ = right ? 0.35f : -0.35f;
+		model.bipedBody.rotateAngleX = 0.12f;
+	}
+
+	@SideOnly(Side.CLIENT)
+	private static void spinKick(ModelBiped model) {
+		model.bipedRightLeg.rotateAngleX = -1.85f;
+		model.bipedRightLeg.rotateAngleZ = 0.75f;
+		model.bipedLeftLeg.rotateAngleX = 0.28f;
+		model.bipedRightArm.rotateAngleX = -0.2f;
+		model.bipedRightArm.rotateAngleZ = 1.15f;
+		model.bipedLeftArm.rotateAngleX = -0.2f;
+		model.bipedLeftArm.rotateAngleZ = -1.15f;
+		model.bipedBody.rotateAngleX = 0.08f;
+	}
+
+	@SideOnly(Side.CLIENT)
+	private static void lowKick(ModelBiped model, boolean right) {
+		ModelRenderer kicking = right ? model.bipedRightLeg : model.bipedLeftLeg;
+		kicking.rotateAngleX = -0.55f;
+		kicking.rotateAngleY = right ? 0.75f : -0.75f;
+		kicking.rotateAngleZ = right ? 0.95f : -0.95f;
+		model.bipedRightArm.rotateAngleX = 0.45f;
+		model.bipedLeftArm.rotateAngleX = -0.65f;
+		model.bipedBody.rotateAngleX = 0.2f;
+		model.bipedBody.rotateAngleY = right ? 0.25f : -0.25f;
+	}
+
+	@SideOnly(Side.CLIENT)
+	private static void dropKick(ModelBiped model) {
+		model.bipedBody.rotateAngleX = 0.42f;
+		model.bipedRightLeg.rotateAngleX = -2.05f;
+		model.bipedRightLeg.rotateAngleZ = 0.12f;
+		model.bipedLeftLeg.rotateAngleX = 0.95f;
+		model.bipedRightArm.rotateAngleX = 1.12f;
+		model.bipedRightArm.rotateAngleZ = 0.35f;
+		model.bipedLeftArm.rotateAngleX = 1.12f;
+		model.bipedLeftArm.rotateAngleZ = -0.35f;
+	}
+
+	@SideOnly(Side.CLIENT)
+	private static void slamPose(ModelBiped model) {
+		model.bipedBody.rotateAngleX = 0.55f;
+		model.bipedRightLeg.rotateAngleX = 0.35f;
+		model.bipedLeftLeg.rotateAngleX = -0.15f;
+		model.bipedRightArm.rotateAngleX = -1.55f;
+		model.bipedLeftArm.rotateAngleX = -1.55f;
+	}
+
+	@SideOnly(Side.CLIENT)
+	public static void copyWearLayers(ModelBiped model) {
+		if (!(model instanceof ModelPlayer)) return;
+		ModelPlayer player = (ModelPlayer)model;
+		player.bipedRightArmwear.rotateAngleX = model.bipedRightArm.rotateAngleX;
+		player.bipedRightArmwear.rotateAngleY = model.bipedRightArm.rotateAngleY;
+		player.bipedRightArmwear.rotateAngleZ = model.bipedRightArm.rotateAngleZ;
+		player.bipedLeftArmwear.rotateAngleX = model.bipedLeftArm.rotateAngleX;
+		player.bipedLeftArmwear.rotateAngleY = model.bipedLeftArm.rotateAngleY;
+		player.bipedLeftArmwear.rotateAngleZ = model.bipedLeftArm.rotateAngleZ;
+		player.bipedLeftLegwear.rotateAngleX = model.bipedLeftLeg.rotateAngleX;
+		player.bipedLeftLegwear.rotateAngleY = model.bipedLeftLeg.rotateAngleY;
+		player.bipedLeftLegwear.rotateAngleZ = model.bipedLeftLeg.rotateAngleZ;
+		player.bipedRightLegwear.rotateAngleX = model.bipedRightLeg.rotateAngleX;
+		player.bipedRightLegwear.rotateAngleY = model.bipedRightLeg.rotateAngleY;
+		player.bipedRightLegwear.rotateAngleZ = model.bipedRightLeg.rotateAngleZ;
+		player.bipedBodyWear.rotateAngleX = model.bipedBody.rotateAngleX;
+		player.bipedBodyWear.rotateAngleY = model.bipedBody.rotateAngleY;
+		player.bipedBodyWear.rotateAngleZ = model.bipedBody.rotateAngleZ;
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -215,7 +329,7 @@ public class PlayerRender extends ElementsNarutomodMod.ModElement {
 					if (headwearHiddenTicks(entityIn) > 0) {
 						model.bipedHeadwear.showModel = false;
 					}
-					if (shouldNarutoRun(entityIn) && model.swingProgress == 0.0f
+					if ((hasTaijutsuPose(entityIn) || shouldNarutoRun(entityIn)) && model.swingProgress == 0.0f
 				 	 && model.rightArmPose == ModelBiped.ArmPose.EMPTY && model.leftArmPose == ModelBiped.ArmPose.EMPTY) {
 						this.renderNarutoRun(model, entityIn, f0, f1, f2, f3, f4, f5);
 				 	} else {
@@ -243,17 +357,17 @@ public class PlayerRender extends ElementsNarutomodMod.ModElement {
 		}
 
 		public void renderNarutoRun(ModelBiped model, Entity entityIn, float f0, float f1, float f2, float f3, float f4, float scale) {
-			model.isSneak = true;
+			boolean taijutsuPose = hasTaijutsuPose(entityIn);
+			model.isSneak = !taijutsuPose;
 			model.setRotationAngles(f0, f1, f2, f3, f4, scale, entityIn);
-			model.bipedRightArm.rotateAngleX = 1.4835F;
-			model.bipedRightArm.rotateAngleY = -0.3927F;
-			model.bipedLeftArm.rotateAngleX = 1.4835F;
-			model.bipedLeftArm.rotateAngleY = 0.3927F;
-			if (model instanceof ModelPlayer) {
-				((ModelPlayer)model).bipedRightArmwear.rotateAngleX = model.bipedRightArm.rotateAngleX;
-				((ModelPlayer)model).bipedRightArmwear.rotateAngleY = model.bipedRightArm.rotateAngleY;
-				((ModelPlayer)model).bipedLeftArmwear.rotateAngleX = model.bipedLeftArm.rotateAngleX;
-				((ModelPlayer)model).bipedLeftArmwear.rotateAngleY = model.bipedLeftArm.rotateAngleY;
+			if (taijutsuPose) {
+				applyTaijutsuPose(model, entityIn);
+			} else {
+				model.bipedRightArm.rotateAngleX = 1.4835F;
+				model.bipedRightArm.rotateAngleY = -0.3927F;
+				model.bipedLeftArm.rotateAngleX = 1.4835F;
+				model.bipedLeftArm.rotateAngleY = 0.3927F;
+				copyWearLayers(model);
 			}
 			GlStateManager.pushMatrix();
 	        if (model.isChild) {
@@ -515,7 +629,7 @@ public class PlayerRender extends ElementsNarutomodMod.ModElement {
 
 		private void renderArmorModel(ModelBiped model, Entity entityIn, float f0, float f1, float f2, float f3, float f4, float f5) {
 			if ((model.bipedRightArm.showModel || model.bipedLeftArm.showModel)
-			 && shouldNarutoRun(entityIn) && model.swingProgress == 0.0f
+			 && (hasTaijutsuPose(entityIn) || shouldNarutoRun(entityIn)) && model.swingProgress == 0.0f
 			 && model.rightArmPose == ModelBiped.ArmPose.EMPTY && model.leftArmPose == ModelBiped.ArmPose.EMPTY) {
 				if (model instanceof ItemBijuCloak.ModelBijuCloak) {
 					((ItemBijuCloak.ModelBijuCloak)model).setNarutoRunPose(true);

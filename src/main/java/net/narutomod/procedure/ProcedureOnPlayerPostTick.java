@@ -8,6 +8,7 @@ import net.narutomod.item.ItemShakuton;
 import net.narutomod.item.ItemRanton;
 import net.narutomod.item.ItemRaiton;
 import net.narutomod.item.ItemNinjutsu;
+import net.narutomod.item.ItemNormalEyes;
 import net.narutomod.item.ItemKaton;
 import net.narutomod.item.ItemJutsu;
 import net.narutomod.item.ItemJiton;
@@ -416,7 +417,7 @@ public class ProcedureOnPlayerPostTick extends ElementsNarutomodMod.ModElement {
 			}
 		}
 		if ((((entity.ticksExisted % 20) == 0) && (!(world.isRemote)))) {
-			if (ItemDojutsu.hasAnyDojutsu((EntityPlayer) entity)) {
+			if (ItemDojutsu.hasAnyDojutsu((EntityPlayer) entity) || ItemNormalEyes.isWearingNormalEyes((EntityLivingBase)entity)) {
 				if ((!ItemSharingan.isWearingMangekyo((EntityPlayer) entity) && (entity.getEntityData().getBoolean("susanoo_activated")))) {
 					{
 						Map<String, Object> $_dependencies = new HashMap<>();
