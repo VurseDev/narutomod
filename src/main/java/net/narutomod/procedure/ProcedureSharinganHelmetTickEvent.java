@@ -2,6 +2,7 @@ package net.narutomod.procedure;
 
 import net.narutomod.item.ItemSharingan;
 import net.narutomod.item.ItemMangekyoSharinganObito;
+import net.narutomod.item.ItemMangekyoSharinganMadara;
 import net.narutomod.item.ItemMangekyoSharingan;
 import net.narutomod.item.ItemDojutsu;
 import net.narutomod.PlayerTracker;
@@ -142,10 +143,14 @@ public class ProcedureSharinganHelmetTickEvent extends ElementsNarutomodMod.ModE
 			if ((((itemstack).getItem() == new ItemStack(ItemSharingan.helmet, (int) (1)).getItem())
 					&& ((entity.getEntityData().getDouble((NarutomodModVariables.BATTLEXP))) >= 1000))) {
 				if ((PlayerTracker.Deaths.hasRecentNearby((EntityPlayer) entity, 40D, 6000D) && (!(world.isRemote)))) {
-					if ((Math.random() < 0.5)) {
+					// Keep the existing battle-XP/death event gates, with equal family odds.
+					int family = ((EntityPlayer)entity).getRNG().nextInt(3);
+					if (family == 0) {
 						mangekyo = new ItemStack(ItemMangekyoSharingan.helmet, (int) (1));
-					} else {
+					} else if (family == 1) {
 						mangekyo = new ItemStack(ItemMangekyoSharinganObito.helmet, (int) (1));
+					} else {
+						mangekyo = new ItemStack(ItemMangekyoSharinganMadara.helmet, 1);
 					}
 					((ItemSharingan.Base) mangekyo.getItem()).copyOwner(mangekyo, itemstack);
 					if (entity instanceof EntityPlayer) {

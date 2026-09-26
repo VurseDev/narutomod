@@ -50,6 +50,9 @@ public class ProcedureSpecialJutsu2OnKeyPressed extends ElementsNarutomodMod.Mod
 		}
 		stack = ((entity instanceof EntityLivingBase) ? ((EntityLivingBase) entity).getHeldItemMainhand() : ItemStack.EMPTY);
 		helmet = ((entity instanceof EntityPlayer) ? ((EntityPlayer) entity).inventory.armorInventory.get(3) : ItemStack.EMPTY);
+		if (entity instanceof EntityPlayer && net.narutomod.OcularSystem.enabled((EntityPlayer) entity)) {
+			net.narutomod.OcularSystem.key((EntityPlayer) entity, 2, is_pressed); return;
+		}
 		if ((helmet.getItem() instanceof ItemDojutsu.Base
 				&& ((ItemDojutsu.Base) helmet.getItem()).onJutsuKey2(is_pressed, helmet, (EntityPlayer) entity))) {
 			return;

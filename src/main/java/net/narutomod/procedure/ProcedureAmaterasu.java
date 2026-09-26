@@ -66,7 +66,12 @@ public class ProcedureAmaterasu extends ElementsNarutomodMod.ModElement {
 		double chakraAmount = 0;
 		double chakraUsage = 0;
 		ItemStack eye = ItemStack.EMPTY;
-		eye = ((entity instanceof EntityPlayer) ? ((EntityPlayer) entity).inventory.armorInventory.get(3) : ItemStack.EMPTY);
+		eye = entity instanceof EntityLivingBase
+			? net.narutomod.OcularAbilities.resolve((EntityLivingBase)entity, "amaterasu") : ItemStack.EMPTY;
+		if (eye.isEmpty()) {
+			entity.getEntityData().setBoolean("amaterasu_active", false);
+			return;
+		}
 		if (((eye).hasTagCompound() && (eye).getTagCompound().getBoolean("sharingan_blinded"))) {
 			entity.getEntityData().setBoolean("amaterasu_active", (false));
 			return;
@@ -93,6 +98,10 @@ public class ProcedureAmaterasu extends ElementsNarutomodMod.ModElement {
 				entity.getEntityData().setDouble("amaterasu_cd", (cooldown));
 				Chakra.pathway((EntityPlayer) entity).consume(chakraUsage * 0.25d);
 				RayTraceResult t = ProcedureUtils.objectEntityLookingAt(entity, 30d);
+				if (t == null || t.typeOfHit == RayTraceResult.Type.MISS) {
+					entity.getEntityData().setBoolean("amaterasu_active", false);
+					return;
+				}
 				i = (double) (PlayerTracker.getNinjaLevel((EntityPlayer) entity) / 15);
 				if (t.typeOfHit == RayTraceResult.Type.ENTITY) {
 					if (t.entityHit instanceof EntityLivingBase) {
@@ -111,24 +120,14 @@ public class ProcedureAmaterasu extends ElementsNarutomodMod.ModElement {
 			}
 		} else {
 			if ((entity.isSneaking())) {
-				{
+				RayTraceResult extinguishHit = entity.world.rayTraceBlocks(entity.getPositionEyes(1f),
+					entity.getPositionEyes(1f).add(entity.getLook(1f).scale(50)), false, false, true);
+				if (extinguishHit != null && extinguishHit.getBlockPos() != null) {
 					Map<String, Object> $_dependencies = new HashMap<>();
 					$_dependencies.put("world", world);
-					$_dependencies
-							.put("x",
-									(entity.world.rayTraceBlocks(entity.getPositionEyes(1f), entity.getPositionEyes(1f).addVector(
-											entity.getLook(1f).x * 50, entity.getLook(1f).y * 50, entity.getLook(1f).z * 50), false, false, true)
-											.getBlockPos().getX()));
-					$_dependencies
-							.put("y",
-									(entity.world.rayTraceBlocks(entity.getPositionEyes(1f), entity.getPositionEyes(1f).addVector(
-											entity.getLook(1f).x * 50, entity.getLook(1f).y * 50, entity.getLook(1f).z * 50), false, false, true)
-											.getBlockPos().getY()));
-					$_dependencies
-							.put("z",
-									(entity.world.rayTraceBlocks(entity.getPositionEyes(1f), entity.getPositionEyes(1f).addVector(
-											entity.getLook(1f).x * 50, entity.getLook(1f).y * 50, entity.getLook(1f).z * 50), false, false, true)
-											.getBlockPos().getZ()));
+					$_dependencies.put("x", extinguishHit.getBlockPos().getX());
+					$_dependencies.put("y", extinguishHit.getBlockPos().getY());
+					$_dependencies.put("z", extinguishHit.getBlockPos().getZ());
 					ProcedureAmaterasuExtinguishEntities.executeProcedure($_dependencies);
 				}
 			} else if (((entity.getEntityData().getBoolean("amaterasu_active"))

@@ -377,6 +377,7 @@ public class ItemByakugan extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static boolean wearingAny(EntityLivingBase entity) {
+		if (net.narutomod.OcularSystem.enabled(entity)) return net.narutomod.OcularSystem.activeByakugan(entity);
 		return entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD).getItem() == helmet;
 	}
 

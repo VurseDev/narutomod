@@ -1205,6 +1205,33 @@
       }
     ]
   },
+  "jutsu_lightning_charge": {
+    "sounds": [{"name": "narutomod:custom_jutsu/charge", "stream": false}]
+  },
+  "jutsu_lightning_discharge": {
+    "sounds": [
+      {"name": "narutomod:custom_jutsu/discharge_a", "stream": false},
+      {"name": "narutomod:custom_jutsu/discharge_b", "stream": false}
+    ]
+  },
+  "jutsu_lightning_pillar_rise": {
+    "sounds": [{"name": "narutomod:custom_jutsu/pillar_rise", "stream": false}]
+  },
+  "jutsu_lightning_pillar_impact": {
+    "sounds": [
+      {"name": "narutomod:custom_jutsu/pillar_impact_a", "stream": false},
+      {"name": "narutomod:custom_jutsu/pillar_impact_b", "stream": false}
+    ]
+  },
+  "jutsu_lightning_chain_snap": {
+    "sounds": [
+      {"name": "narutomod:custom_jutsu/chain_snap_a", "stream": false},
+      {"name": "narutomod:custom_jutsu/chain_snap_b", "stream": false}
+    ]
+  },
+  "jutsu_lightning_sustain": {
+    "sounds": [{"name": "narutomod:custom_jutsu/sustain", "stream": false}]
+  },
   "sharingan_activate": {
     "category": "player",
     "sounds": [

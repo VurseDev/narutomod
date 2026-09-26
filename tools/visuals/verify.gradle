@@ -1,0 +1,18 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            project.tasks.create(name: 'verifyGenjutsuScenes', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.GenjutsuSceneChecks'
+                workingDir project.projectDir
+            }
+            project.tasks.create(name: 'verifyVisualRefresh', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.VisualRefreshChecks'
+                workingDir project.projectDir
+            }
+        }
+    }
+}

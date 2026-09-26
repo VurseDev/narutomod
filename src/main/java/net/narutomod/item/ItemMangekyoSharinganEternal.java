@@ -70,10 +70,10 @@ public class ItemMangekyoSharinganEternal extends ElementsNarutomodMod.ModElemen
 				super.onUpdate(itemstack, world, entity, par4, par5);
 				if (entity instanceof EntityPlayer && entity.ticksExisted % 20 == 0) {
 					for (ItemStack stack1 : ProcedureUtils.getAllItemsOfSubType((EntityPlayer)entity, ItemSharingan.Base.class)) {
-						if (stack1.getItem() != helmet) {
+						if (stack1.getItem() != helmet && ((ItemSharingan.Base)stack1.getItem()).getSubType() != ItemSharingan.Type.MADARA) {
 							UUID uuid1 = ProcedureUtils.getOwnerId(itemstack);
 							if (uuid1 != null && uuid1.equals(ProcedureUtils.getOwnerId(stack1))) {
-								stack1.shrink(1);
+								if (ItemOcularGear.eye(stack1)==null && ItemOcularGear.eye(itemstack)==null) stack1.shrink(1);
 							}
 						}
 					}

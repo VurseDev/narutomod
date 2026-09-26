@@ -50,19 +50,8 @@ import net.narutomod.procedure.ProcedureUtils;
  * permanent stat sticks.  The seal item is also the mastery record and owner
  * record, which keeps a distributed RP item from becoming a reusable buff.
  */
-@ElementsNarutomodMod.ModElement.Tag
+// Shelved feature: deliberately NOT tagged as a mod element. No seal items or hooks register.
 public class ItemCurseMark extends ElementsNarutomodMod.ModElement {
-	@ObjectHolder("narutomod:curse_mark_heaven") public static final Item HEAVEN = null;
-	@ObjectHolder("narutomod:curse_mark_earth") public static final Item EARTH = null;
-	@ObjectHolder("narutomod:curse_mark_jirobo") public static final Item JIROBO = null;
-	@ObjectHolder("narutomod:curse_mark_kidomaru") public static final Item KIDOMARU = null;
-	@ObjectHolder("narutomod:curse_mark_tayuya") public static final Item TAYUYA = null;
-	@ObjectHolder("narutomod:curse_mark_sakon_ukon") public static final Item SAKON_UKON = null;
-	@ObjectHolder("narutomod:curse_mark_animal") public static final Item ANIMAL = null;
-	@ObjectHolder("narutomod:curse_mark_prisoners") public static final Item PRISONERS = null;
-	@ObjectHolder("narutomod:curse_mark_guren_team") public static final Item GUREN_TEAM = null;
-	@ObjectHolder("narutomod:curse_mark_iburi") public static final Item IBURI = null;
-
 	private static final String STAGE = "CurseMarkStage";
 	private static final String CORRUPTION = "CurseMarkCorruption";
 	private static final String EXPIRES = "CurseMarkExpires";

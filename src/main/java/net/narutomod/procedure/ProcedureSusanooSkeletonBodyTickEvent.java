@@ -37,7 +37,8 @@ public class ProcedureSusanooSkeletonBodyTickEvent extends ElementsNarutomodMod.
 			if ((!(world.isRemote))) {
 				Entity entitySpawned = world.getEntityByID(ProcedureSusanoo.getSummonedSusanooId(entity));
 				if ((entitySpawned == null || !(entitySpawned instanceof EntitySusanooBase) || !entitySpawned.isEntityAlive()
-						|| ((entity.getEntityData().getDouble("susanoo_ticks")) > 820))) {
+						|| (!(entitySpawned instanceof net.narutomod.entity.EntitySusanooMadara)
+						 && (entity.getEntityData().getDouble("susanoo_ticks")) > 820))) {
 					{
 						Map<String, Object> $_dependencies = new HashMap<>();
 						$_dependencies.put("entity", entity);

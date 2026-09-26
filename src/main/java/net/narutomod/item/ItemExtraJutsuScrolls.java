@@ -28,7 +28,7 @@ import java.util.List;
 
 @ElementsNarutomodMod.ModElement.Tag
 public class ItemExtraJutsuScrolls extends ElementsNarutomodMod.ModElement {
-	public enum Kind { NINJUTSU, KATON, SUITON, RAITON, DOTON, INTON }
+	public enum Kind { NINJUTSU, KATON, SUITON, RAITON, DOTON, INTON, EXPLOSIVE }
 
 	public static final ScrollDef[] SCROLLS = new ScrollDef[] {
 		new ScrollDef("scroll_fire_rasengan", Kind.NINJUTSU, ItemNinjutsu.FIRERASENGAN, "tooltip.narutomod.scroll.rank_a", "narutomod:textures/blocks/ninjutsu.png"),
@@ -52,6 +52,14 @@ public class ItemExtraJutsuScrolls extends ElementsNarutomodMod.ModElement {
 		,new ScrollDef("scroll_murder_intent", Kind.INTON, ItemInton.MURDER_INTENT, "tooltip.narutomod.scroll.rank_b", "narutomod:textures/blocks/inton.png")
 		,new ScrollDef("scroll_illusionary_execution", Kind.INTON, ItemInton.ILLUSIONARY_EXECUTION, "tooltip.narutomod.scroll.rank_a", "narutomod:textures/blocks/inton.png")
 		,new ScrollDef("scroll_burning_coffin", Kind.INTON, ItemInton.BURNING_COFFIN, "tooltip.narutomod.scroll.rank_a", "narutomod:textures/blocks/inton.png")
+		,new ScrollDef("scroll_edo_tensei", Kind.NINJUTSU, ItemNinjutsu.EDOTENSEI, "tooltip.narutomod.scroll.rank_s", "narutomod:textures/blocks/ninjutsu.png")
+		,new ScrollDef("scroll_tag_volley", Kind.EXPLOSIVE, ItemExplosiveArt.VOLLEY, "tooltip.narutomod.scroll.rank_c", "narutomod:textures/blocks/explosivetag.png")
+		,new ScrollDef("scroll_snare_circuit", Kind.EXPLOSIVE, ItemExplosiveArt.CIRCUIT, "tooltip.narutomod.scroll.rank_b", "narutomod:textures/blocks/explosivetag.png")
+		,new ScrollDef("scroll_seeking_tag_swarm", Kind.EXPLOSIVE, ItemExplosiveArt.SWARM, "tooltip.narutomod.scroll.rank_a", "narutomod:textures/blocks/explosivetag.png")
+		,new ScrollDef("scroll_breaching_seal", Kind.EXPLOSIVE, ItemExplosiveArt.BREACH, "tooltip.narutomod.scroll.rank_b", "narutomod:textures/blocks/explosivetag.png")
+		,new ScrollDef("scroll_twin_flame_dragons", Kind.KATON, ItemKaton.TWINFLAMEDRAGONS, "tooltip.narutomod.scroll.rank_a", "narutomod:textures/blocks/katon.png")
+		,new ScrollDef("scroll_flame_company", Kind.KATON, ItemKaton.FLAMECOMPANY, "tooltip.narutomod.scroll.rank_b", "narutomod:textures/blocks/katon.png")
+		,new ScrollDef("scroll_clone_throw", Kind.NINJUTSU, ItemNinjutsu.CLONETHROW, "tooltip.narutomod.scroll.rank_b", "narutomod:textures/blocks/ninjutsu.png")
 	};
 
 	public ItemExtraJutsuScrolls(ElementsNarutomodMod instance) {

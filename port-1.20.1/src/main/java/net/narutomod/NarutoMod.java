@@ -41,9 +41,12 @@ public class NarutoMod {
         ITEMS.register(modEventBus);
         CREATIVE_TABS.register(modEventBus);
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(new CoreEvents());
+        MinecraftForge.EVENT_BUS.register(new CoreCommands());
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(CoreNetwork::register);
         LOGGER.info("Naruto Mod 1.20.1 port workspace loaded.");
     }
 }

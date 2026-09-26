@@ -1,0 +1,716 @@
+{
+  "texture_width": 64,
+  "texture_height": 64,
+  "groups": [
+    {
+      "uuid": "4c443789-4f9e-8785-b2fc-345a27e608fc",
+      "name": "illusionroot",
+      "parent": null,
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        "07b6c964-b13a-5e11-88f1-e3c247028fca"
+      ]
+    },
+    {
+      "uuid": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "name": "illusionbody",
+      "parent": "4c443789-4f9e-8785-b2fc-345a27e608fc",
+      "origin": [
+        0,
+        24,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        "03230915-d339-16c1-6b79-f2898b633738",
+        "7b273a20-d76b-b50f-4436-6476c2d0d395",
+        "ca65923c-0975-54bb-8396-eaae6c92dfcf",
+        "baee0029-1e86-c347-6afa-980185af2892",
+        "4e0a0011-9d3c-1f42-801c-5f3e658563bb",
+        "68a4f6b4-8f92-ee1d-3e20-d91205c7cdfc"
+      ]
+    },
+    {
+      "uuid": "7b273a20-d76b-b50f-4436-6476c2d0d395",
+      "name": "illusionhead",
+      "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "origin": [
+        0,
+        24,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        "46b2f90c-c9b3-74e1-0433-c50fe91fdd49"
+      ]
+    },
+    {
+      "uuid": "ca65923c-0975-54bb-8396-eaae6c92dfcf",
+      "name": "illusionarm_right",
+      "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "origin": [
+        -6,
+        22,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        "b9ce03aa-e053-60c6-159e-158142fca43b"
+      ]
+    },
+    {
+      "uuid": "baee0029-1e86-c347-6afa-980185af2892",
+      "name": "illusionarm_left",
+      "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "origin": [
+        6,
+        22,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        "0ae29153-a33d-c217-45e5-5e1a7cdaa855"
+      ]
+    },
+    {
+      "uuid": "4e0a0011-9d3c-1f42-801c-5f3e658563bb",
+      "name": "illusionleg_right",
+      "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "origin": [
+        -2,
+        12,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        "008f0ca7-9151-87a5-f4d5-074df1bb82d6"
+      ]
+    },
+    {
+      "uuid": "68a4f6b4-8f92-ee1d-3e20-d91205c7cdfc",
+      "name": "illusionleg_left",
+      "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "origin": [
+        2,
+        12,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        "9369a202-5198-ce00-f11c-49f63dbd2fcf"
+      ]
+    }
+  ],
+  "cubes": [
+    {
+      "uuid": "03230915-d339-16c1-6b79-f2898b633738",
+      "name": "illusionbody_cube",
+      "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "from": [
+        -4,
+        12,
+        -2
+      ],
+      "to": [
+        4,
+        24,
+        2
+      ],
+      "origin": [
+        0,
+        24,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "east": {
+          "uv": [
+            18,
+            0,
+            22,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "south": {
+          "uv": [
+            9,
+            0,
+            17,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "west": {
+          "uv": [
+            23,
+            0,
+            27,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "up": {
+          "uv": [
+            36,
+            26,
+            44,
+            30
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "down": {
+          "uv": [
+            45,
+            26,
+            53,
+            30
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        }
+      }
+    },
+    {
+      "uuid": "46b2f90c-c9b3-74e1-0433-c50fe91fdd49",
+      "name": "illusionhead_cube",
+      "parent": "7b273a20-d76b-b50f-4436-6476c2d0d395",
+      "from": [
+        -4,
+        24,
+        -4
+      ],
+      "to": [
+        4,
+        32,
+        4
+      ],
+      "origin": [
+        0,
+        24,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            45,
+            13,
+            53,
+            21
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "east": {
+          "uv": [
+            54,
+            13,
+            62,
+            21
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "south": {
+          "uv": [
+            0,
+            26,
+            8,
+            34
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "west": {
+          "uv": [
+            9,
+            26,
+            17,
+            34
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "up": {
+          "uv": [
+            18,
+            26,
+            26,
+            34
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "down": {
+          "uv": [
+            27,
+            26,
+            35,
+            34
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        }
+      }
+    },
+    {
+      "uuid": "b9ce03aa-e053-60c6-159e-158142fca43b",
+      "name": "illusionarm_right_cube",
+      "parent": "ca65923c-0975-54bb-8396-eaae6c92dfcf",
+      "from": [
+        -8,
+        12,
+        -2
+      ],
+      "to": [
+        -4,
+        24,
+        2
+      ],
+      "origin": [
+        -6,
+        22,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            28,
+            0,
+            32,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "east": {
+          "uv": [
+            33,
+            0,
+            37,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "south": {
+          "uv": [
+            38,
+            0,
+            42,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "west": {
+          "uv": [
+            43,
+            0,
+            47,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "up": {
+          "uv": [
+            54,
+            26,
+            58,
+            30
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "down": {
+          "uv": [
+            59,
+            26,
+            63,
+            30
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        }
+      }
+    },
+    {
+      "uuid": "0ae29153-a33d-c217-45e5-5e1a7cdaa855",
+      "name": "illusionarm_left_cube",
+      "parent": "baee0029-1e86-c347-6afa-980185af2892",
+      "from": [
+        4,
+        12,
+        -2
+      ],
+      "to": [
+        8,
+        24,
+        2
+      ],
+      "origin": [
+        6,
+        22,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            48,
+            0,
+            52,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "east": {
+          "uv": [
+            53,
+            0,
+            57,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "south": {
+          "uv": [
+            58,
+            0,
+            62,
+            12
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "west": {
+          "uv": [
+            0,
+            13,
+            4,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "up": {
+          "uv": [
+            0,
+            35,
+            4,
+            39
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "down": {
+          "uv": [
+            5,
+            35,
+            9,
+            39
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        }
+      }
+    },
+    {
+      "uuid": "008f0ca7-9151-87a5-f4d5-074df1bb82d6",
+      "name": "illusionleg_right_cube",
+      "parent": "4e0a0011-9d3c-1f42-801c-5f3e658563bb",
+      "from": [
+        -4,
+        0,
+        -2
+      ],
+      "to": [
+        0,
+        12,
+        2
+      ],
+      "origin": [
+        -2,
+        12,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            13,
+            9,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "east": {
+          "uv": [
+            10,
+            13,
+            14,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "south": {
+          "uv": [
+            15,
+            13,
+            19,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "west": {
+          "uv": [
+            20,
+            13,
+            24,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "up": {
+          "uv": [
+            10,
+            35,
+            14,
+            39
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "down": {
+          "uv": [
+            15,
+            35,
+            19,
+            39
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        }
+      }
+    },
+    {
+      "uuid": "9369a202-5198-ce00-f11c-49f63dbd2fcf",
+      "name": "illusionleg_left_cube",
+      "parent": "68a4f6b4-8f92-ee1d-3e20-d91205c7cdfc",
+      "from": [
+        0,
+        0,
+        -2
+      ],
+      "to": [
+        4,
+        12,
+        2
+      ],
+      "origin": [
+        2,
+        12,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            25,
+            13,
+            29,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "east": {
+          "uv": [
+            30,
+            13,
+            34,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "south": {
+          "uv": [
+            35,
+            13,
+            39,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "west": {
+          "uv": [
+            40,
+            13,
+            44,
+            25
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "up": {
+          "uv": [
+            20,
+            35,
+            24,
+            39
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        },
+        "down": {
+          "uv": [
+            25,
+            35,
+            29,
+            39
+          ],
+          "rotation": 0,
+          "texture": "88cad543-5879-14bd-37f8-30dc64b64c7b"
+        }
+      }
+    }
+  ]
+}

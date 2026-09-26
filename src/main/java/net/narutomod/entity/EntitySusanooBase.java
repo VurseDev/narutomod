@@ -82,7 +82,7 @@ public abstract class EntitySusanooBase extends EntityCreature implements IRange
 			//this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE)
 			 //.applyModifier(new AttributeModifier("susanoo.damage", ((EntityPlayer)player).experienceLevel, 0));
 		}
-		ItemStack helmetstack = player.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
+		ItemStack helmetstack = net.narutomod.OcularAbilities.resolve(player, "susanoo");
 		if (helmetstack.getItem() instanceof ItemSharingan.Base) {
 			if (ProcedureUtils.isOriginalOwner(player, helmetstack)) {
 				this.chakraUsageModifier = 1d;
@@ -163,6 +163,7 @@ public abstract class EntitySusanooBase extends EntityCreature implements IRange
 
 	@Override
 	public boolean attackEntityFrom(DamageSource source, float amount) {
+		if (net.narutomod.SusanooCombat.isOwnSusanoo(this, source.getTrueSource())) return false;
 		if (source.getImmediateSource() instanceof EntityPlayer && source.getImmediateSource().equals(getControllingPassenger()))
 			return false;
 		if (source.getImmediateSource() instanceof EntityCreature && source.getImmediateSource().equals(this))
@@ -266,7 +267,7 @@ public abstract class EntitySusanooBase extends EntityCreature implements IRange
 		if (passenger.getRidingEntity() != this) {
 			throw new IllegalStateException("Use x.startRiding(y), not y.addPassenger(x)");
 		} else {
-			Object obj = ReflectionHelper.getPrivateValue(Entity.class, this, "riddenByEntities", "field_70725_aQ");
+			Object obj = ReflectionHelper.getPrivateValue(Entity.class, this, new String[]{"riddenByEntities", "field_184244_h"});
 			if (!(obj instanceof List)) {
 				obj = null;
 				try {
@@ -364,6 +365,7 @@ public abstract class EntitySusanooBase extends EntityCreature implements IRange
 		 (!flag && !this.isBeingRidden()))) {
 			this.setDead();
 		}
+		if (this.isDead) return;
 		if (flag) {
 			if (!((EntityPlayer)ownerPlayer).isCreative()) {
 				if (this.isBeingRidden()) {
@@ -373,6 +375,7 @@ public abstract class EntitySusanooBase extends EntityCreature implements IRange
 				}
 				if (!this.world.isRemote) {
 					this.consumeChakra();
+					if (this.isDead) return;
 				}
 			}
 			if (!this.world.isRemote && this.ticksExisted % 20 == 1) {
@@ -389,7 +392,7 @@ public abstract class EntitySusanooBase extends EntityCreature implements IRange
 			this.playSound(net.minecraft.util.SoundEvent.REGISTRY
 			 .getObject(new ResourceLocation("block.fire.ambient")), 1.0F, this.rand.nextFloat() * 0.7F + 0.3F);
 		}
-		for (int i = 0; i < (int) this.height; i++) {
+		for (int i = 0; i < this.getAuraParticleCount(); i++) {
 			double d0 = this.posX + (this.rand.nextFloat() - 0.5D) * this.width;
 			double d1 = this.posY + this.rand.nextFloat() * this.height;
 			double d2 = this.posZ + (this.rand.nextFloat() - 0.5D) * this.width;
@@ -402,6 +405,8 @@ public abstract class EntitySusanooBase extends EntityCreature implements IRange
 		this.playSound(SoundEvents.ITEM_SHIELD_BREAK, 1.0f, this.rand.nextFloat() * 0.4f + 0.7f);
 		this.setDead();
 	}
+
+	protected int getAuraParticleCount() { return (int)this.height; }
 
 	@Override
     public void setSwingingArms(boolean swingingArms) {

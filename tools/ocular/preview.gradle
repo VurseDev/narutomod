@@ -1,0 +1,29 @@
+// Opt-in renderer check; deliberately not part of headless build/check tasks.
+// gradle --offline -I tools/ocular/preview.gradle captureOcularUi
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            def cacheRoot = new File(gradle.gradleUserHomeDir, 'caches')
+            def natives = project.file("${project.buildDir}/ocular-ui-natives")
+            def lwjglNatives = project.fileTree(new File(cacheRoot,
+                    'modules-2/files-2.1/org.lwjgl.lwjgl/lwjgl-platform')) {
+                include '**/*natives-windows.jar'
+            }
+            project.tasks.create(name: 'prepareOcularUiNatives', type: Copy) {
+                from { lwjglNatives.collect { project.zipTree(it) } }
+                include '*.dll'
+                into natives
+            }
+            project.tasks.create(name: 'captureOcularUi', type: JavaExec) {
+                dependsOn project.tasks.testClasses, project.tasks.prepareOcularUiNatives
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.client.OcularUiCapture'
+                workingDir project.projectDir
+                systemProperty 'java.library.path', natives.absolutePath
+                args project.projectDir.absolutePath,
+                        new File(cacheRoot, 'forge_gradle/minecraft_repo/versions/1.12.2/client.jar').absolutePath,
+                        project.file("${project.buildDir}/reports/ocular-ui").absolutePath
+            }
+        }
+    }
+}

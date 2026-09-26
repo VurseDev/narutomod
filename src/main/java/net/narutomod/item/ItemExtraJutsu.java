@@ -358,8 +358,7 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 			if (!entity.world.isRemote) {
 				Vec3d look = entity.getLookVec();
 				float mastery = masteryRatio(stack, ItemRaiton.CHIDORISENBON);
-				entity.world.playSound(null, entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ,
-				 SoundEvents.ENTITY_LIGHTNING_THUNDER, SoundCategory.PLAYERS, 0.35f, 1.8f);
+				net.narutomod.JutsuEffectSounds.discharge(entity.world, entity.getPositionEyes(1f));
 				for (int i = 0; i < 8; i++) {
 					double side = (i - 3.5d) * 0.13d;
 					double up = ((i % 4) - 1.5d) * 0.10d;
@@ -737,8 +736,15 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 			for (EntityLivingBase target : this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().grow(4d))) {
 				if (!target.equals(summoner)) target.addPotionEffect(new PotionEffect(PotionParalysis.potion, 50, 0, false, false));
 			}
-			Particles.spawnParticle(this.world, Particles.Types.SMOKE, this.posX, this.posY + 1d, this.posZ,
-			 35, 0.7d, 0.8d, 0.7d, 0d, 0.03d, 0d, 0x70D8FFFF, 20);
+			Vec3d center=this.getPositionVector().addVector(0,1,0);
+			net.narutomod.JutsuVisualEffects.burst(this.world,center,1.2f,0x83DCFF);
+			net.narutomod.JutsuVisualEffects.ring(this.world,this.getPositionVector().addVector(0,.08,0),3.5f,12,0x66BFFF);
+			for(int i=0;i<8;i++) {
+				double angle=i*Math.PI/4;
+				Vec3d end=center.addVector(Math.cos(angle)*3.5,(i%2==0?.5:-.5),Math.sin(angle)*3.5);
+				net.narutomod.JutsuVisualEffects.bolt(this.world,center,end,.035f,10,0x83DCFF);
+			}
+			net.narutomod.JutsuEffectSounds.discharge(this.world,center);
 		}
 	}
 
@@ -836,11 +842,10 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 				this.rotationPitch = (float)(MathHelper.atan2(this.motionY, MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ)) * (180d / Math.PI));
 			}
 			super.onUpdate();
-			Particles.spawnParticle(this.world, Particles.Types.SMOKE, this.posX, this.posY, this.posZ,
-			 1, 0.02d, 0.02d, 0.02d, 0d, 0d, 0d, 0x50D8FFFF, 8);
-			if (this.world.isRemote && this.ticksExisted % 2 == 0) {
-				this.world.spawnParticle(EnumParticleTypes.CRIT_MAGIC, this.posX - this.motionX * 0.15d, this.posY - this.motionY * 0.15d,
-				 this.posZ - this.motionZ * 0.15d, 0d, 0d, 0d);
+			if (this.world.isRemote && !this.inGround && this.ticksExisted % 2 == 0) {
+				Vec3d tip=this.getPositionVector();
+				Vec3d tail=tip.subtract(new Vec3d(this.motionX,this.motionY,this.motionZ).normalize().scale(.9));
+				net.narutomod.JutsuVisualEffects.bolt(this.world,tail,tip,.012f,4,0xB0EEFF);
 			}
 		}
 
@@ -849,6 +854,11 @@ public class ItemExtraJutsu extends ElementsNarutomodMod.ModElement {
 			super.arrowHit(entity);
 			entity.attackEntityFrom(ItemJutsu.causeJutsuDamage(this, this.shootingEntity), 3.0f);
 			entity.addPotionEffect(new PotionEffect(PotionParalysis.potion, 35, 0, false, false));
+			if(!this.world.isRemote) {
+				Vec3d impact=entity.getPositionVector().addVector(0,entity.height*.6,0);
+				net.narutomod.JutsuVisualEffects.burst(this.world,impact,.28f,0xB0EEFF);
+				net.narutomod.JutsuEffectSounds.chainSnap(this.world,impact);
+			}
 		}
 	}
 

@@ -11,6 +11,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import net.minecraft.world.World;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.potion.PotionEffect;
@@ -27,6 +28,7 @@ import net.narutomod.entity.EntitySusanooWinged;
 import net.narutomod.entity.EntitySusanooSkeleton;
 import net.narutomod.entity.EntitySusanooClothed;
 import net.narutomod.entity.EntitySusanooBase;
+import net.narutomod.entity.EntitySusanooMadara;
 import net.narutomod.Chakra;
 import net.narutomod.PlayerTracker;
 import net.narutomod.NarutomodModVariables;
@@ -44,6 +46,7 @@ public class ProcedureSusanoo extends ElementsNarutomodMod.ModElement {
 	@Override
 	public void init(FMLInitializationEvent event) {
 		MinecraftForge.EVENT_BUS.register(new PlayerHook());
+		MinecraftForge.EVENT_BUS.register(new net.narutomod.SusanooCombat.Events());
 	}
 
 	public static int getSummonedSusanooId(Entity entity) {
@@ -52,14 +55,63 @@ public class ProcedureSusanoo extends ElementsNarutomodMod.ModElement {
 
 	public static boolean isActivated(Entity entity) {
 		Entity susanoo = entity.world.getEntityByID(getSummonedSusanooId(entity));
-		return susanoo instanceof EntitySusanooBase && susanoo.isEntityAlive();
+		return susanoo instanceof EntitySusanooBase && susanoo.isEntityAlive()
+		 && entity.equals(((EntitySusanooBase)susanoo).getOwnerPlayer());
+	}
+
+	public static void trackSummon(EntityPlayer player, EntitySusanooBase susanoo) {
+		player.getEntityData().setBoolean("susanoo_activated", true);
+		player.getEntityData().setInteger(SUMMONED_SUSANOO, susanoo.getEntityId());
+	}
+
+	/** Remove stale active state when the owned entity dies or exhausts its chakra. Never despawns a replacement. */
+	public static void clearTrackedSummon(EntityPlayer player, EntitySusanooBase susanoo) {
+		if (getSummonedSusanooId(player) != susanoo.getEntityId()) return;
+		player.getEntityData().removeTag(SUMMONED_SUSANOO);
+		player.getEntityData().removeTag("susanoo_activated");
+		player.getEntityData().removeTag("susanoo_ticks");
+		if (player.isEntityAlive()) player.addPotionEffect(new PotionEffect(PotionFeatherFalling.potion, 60, 5));
+	}
+
+	private static void summonMadara(EntityPlayer player) {
+		if (!player.isEntityAlive() || player.isSpectator() || player.isPlayerSleeping()
+		 || player.isRiding() || !EntitySusanooMadara.wearingMadara(player)
+		 || (!player.isCreative() && PlayerTracker.getBattleXp(player) < EntitySusanooBase.BXP_REQUIRED_L0)) return;
+		if (!net.narutomod.GenjutsuSession.canUse(player, null)) return;
+		EntitySusanooMadara susanoo = new EntitySusanooMadara(player);
+		if (!susanoo.hasStageClearance(0)) {
+			player.sendStatusMessage(new TextComponentTranslation("message.narutomod.madara_no_space"), true);
+			return;
+		}
+		if (!player.isCreative() && Chakra.pathway(player).getAmount() < BASE_CHAKRA_USAGE) {
+			Chakra.pathway(player).warningDisplay();
+			return;
+		}
+		if (!player.world.spawnEntity(susanoo)) return;
+		if (!player.startRiding(susanoo, true)) { susanoo.setDead(); return; }
+		if (!player.isCreative() && !Chakra.pathway(player).consume(BASE_CHAKRA_USAGE)) {
+			player.dismountRidingEntity();
+			susanoo.setDead();
+			return;
+		}
+		trackSummon(player, susanoo);
+		player.getEntityData().setDouble("susanoo_cd", NarutomodModVariables.world_tick + 2400d);
+		net.minecraft.util.SoundEvent sound = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("narutomod:chakraflow"));
+		if (sound != null) susanoo.playSound(sound, .8f, .85f);
 	}
 
 	public static void execute(EntityPlayer player) {
 		World world = player.world;
+		if (world.isRemote) return;
 		boolean flag = (player.isCreative() || ProcedureUtils.hasAnyItemOfSubtype(player, ItemRinnegan.Base.class));
-		ItemStack helmet = player.inventory.armorInventory.get(3);
+		ItemStack helmet = net.narutomod.OcularAbilities.resolve(player, "susanoo");
 		if (!player.getEntityData().getBoolean("susanoo_activated")) {
+			// Physical sockets must supply one compatible pair; an unrelated carried eye is not a bypass.
+			if (net.narutomod.OcularSystem.enabled(player) && helmet.isEmpty()) return;
+			if (helmet.getItem() instanceof ItemSharingan.Base && ((ItemSharingan.Base)helmet.getItem()).getSubType() == ItemSharingan.Type.MADARA) {
+				summonMadara(player);
+				return;
+			}
 			if (!ItemSharingan.isBlinded(helmet) && PlayerTracker.getBattleXp(player) >= EntitySusanooBase.BXP_REQUIRED_L0
 			 && Chakra.pathway(player).consume(BASE_CHAKRA_USAGE)) {
 				player.getEntityData().setBoolean("susanoo_activated", true);
@@ -104,8 +156,14 @@ public class ProcedureSusanoo extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static void upgrade(EntityPlayer player) {
+		if (player.world.isRemote) return;
+		if (net.narutomod.OcularSystem.enabled(player) && net.narutomod.OcularAbilities.resolve(player, "susanoo").isEmpty()) return;
 		Entity susanoo = player.getRidingEntity();
 		double playerXp = PlayerTracker.getBattleXp(player);
+		if (susanoo instanceof EntitySusanooMadara) {
+			((EntitySusanooMadara)susanoo).tryUpgrade(player);
+			return;
+		}
 		if (susanoo instanceof EntitySusanooBase) {
 			if (susanoo instanceof EntitySusanooSkeleton.EntityCustom) {
 				boolean fullBody = ((EntitySusanooSkeleton.EntityCustom)susanoo).isFullBody();

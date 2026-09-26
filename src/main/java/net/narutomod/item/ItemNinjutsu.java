@@ -82,6 +82,8 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum FIRERASENGAN = new ItemJutsu.JutsuEnum(16, "fire_rasengan", 'A', 150d, new EntityRasengan.EC.FireJutsu()).withCustomBalance();
 	public static final ItemJutsu.JutsuEnum SENSORIAL = new ItemJutsu.JutsuEnum(17, "sensorial_jutsu", 'S', 95d, new SensorialJutsu()).withCustomBalance();
 	public static final ItemJutsu.JutsuEnum CHAKRAPULSE = new ItemJutsu.JutsuEnum(18, "chakra_pulse", 'D', 0, 35d, new ChakraPulse()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum EDOTENSEI = new ItemJutsu.JutsuEnum(19, "jutsu.narutomod.edo_ritual", 'S', 180d, new ItemSummoningSouls.Ritual()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum CLONETHROW = new ItemJutsu.JutsuEnum(20, "clone_throw", 'B', 45d, new BloodlineTechniques.CloneThrow()).withCustomBalance();
 
 	public ItemNinjutsu(ElementsNarutomodMod instance) {
 		super(instance, 377);
@@ -89,7 +91,7 @@ public class ItemNinjutsu extends ElementsNarutomodMod.ModElement {
 	
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(REPLACEMENT, KAGEBUNSHIN, RASENGAN, LIMBOCLONE, AMENOTEJIKARA, PUPPET, BUGSWARM, INVISABILITY, TRANSFORM, HIRAISHIN, SHIKIGAMI, MULTICLONE, CROWCLONE, CROWTRAPCLONE, EXPLOSIVECLONE, SHURIKENSHADOWCLONE, FIRERASENGAN, SENSORIAL, CHAKRAPULSE));
+		elements.items.add(() -> new RangedItem(REPLACEMENT, KAGEBUNSHIN, RASENGAN, LIMBOCLONE, AMENOTEJIKARA, PUPPET, BUGSWARM, INVISABILITY, TRANSFORM, HIRAISHIN, SHIKIGAMI, MULTICLONE, CROWCLONE, CROWTRAPCLONE, EXPLOSIVECLONE, SHURIKENSHADOWCLONE, FIRERASENGAN, SENSORIAL, CHAKRAPULSE, EDOTENSEI, CLONETHROW));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityReplacementClone.class)
 			.id(new ResourceLocation("narutomod", "replacementclone"), ENTITYID).name("replacementclone")
 			.tracker(64, 1, true).build());

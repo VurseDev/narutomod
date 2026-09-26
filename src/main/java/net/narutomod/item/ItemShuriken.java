@@ -88,7 +88,9 @@ public class ItemShuriken extends ElementsNarutomodMod.ModElement {
 			if (!world.isRemote && entityLivingBase instanceof EntityPlayerMP) {
 				EntityPlayerMP entity = (EntityPlayerMP) entityLivingBase;
 				Vec3d vec = entity.getLookVec();
-				if (entity.getRidingEntity() instanceof EntitySusanooBase) {
+				if (entity.getRidingEntity() instanceof net.narutomod.entity.EntitySusanooMadara) {
+					if (!((net.narutomod.entity.EntitySusanooMadara)entity.getRidingEntity()).tryAttackEntityRanged(vec.x, vec.y, vec.z)) return;
+				} else if (entity.getRidingEntity() instanceof EntitySusanooBase) {
 					((EntitySusanooBase)entity.getRidingEntity()).attackEntityRanged(vec.x, vec.y, vec.z);
 				} else {
 					float power = 0.7f;

@@ -212,6 +212,13 @@ public class GuiNinjaScroll extends ElementsNarutomodMod.ModElement {
 			public IMessage onMessage(GUIButtonPressedMessage message, MessageContext context) {
 				EntityPlayerMP entity = context.getServerHandler().player;
 				entity.getServerWorld().addScheduledTask(() -> {
+					// Extra scrolls must use this player's live container, not the global per-GUI map.
+					if (GuiScrollExtraJutsu.handles(message.guiWindow)) {
+						if (entity.openContainer instanceof GuiScrollExtraJutsu.GuiContainerMod
+						    && ((GuiContainerMod)entity.openContainer).id == message.guiWindow)
+							((GuiContainerMod)entity.openContainer).handleButtonAction(entity, message.buttonID);
+						return;
+					}
 					if (guiMap.containsKey(message.guiWindow)) {
 						guiMap.get(message.guiWindow).handleButtonAction(entity, message.buttonID);
 					}

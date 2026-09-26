@@ -348,6 +348,7 @@ public class EntityWaterDragon extends ElementsNarutomodMod.ModElement {
 			private final ModelRenderer[] whiskerLeft = new ModelRenderer[6];
 			private final ModelRenderer[] whiskerRight = new ModelRenderer[6];
 			private final ModelRenderer[] spine = new ModelRenderer[100];
+			private final ModelRenderer flameBodySegment;
 			private final ModelRenderer eyes;
 
 			public ModelDragonHead() {
@@ -561,6 +562,11 @@ public class EntityWaterDragon extends ElementsNarutomodMod.ModElement {
 						spine[i-1].addChild(spine[i]);
 					}
 				}
+				// The fire variant uses the same UVs and geometry, with an independent
+				// segment so its taper never changes the water dragon's linked spine.
+				flameBodySegment = new ModelRenderer(this);
+				flameBodySegment.cubeList.add(new ModelBox(flameBodySegment, 192, 104, -5.0F, -4.5F, 0.0F, 10, 10, 10, 2.0F, false));
+				flameBodySegment.cubeList.add(new ModelBox(flameBodySegment, 48, 0, -1.0F, -10.5F, 2.0F, 2, 4, 6, 1.0F, false));
 
 				eyes = new ModelRenderer(this);
 				eyes.setRotationPoint(0.0F, 0.0F, 0.0F);
@@ -586,6 +592,22 @@ public class EntityWaterDragon extends ElementsNarutomodMod.ModElement {
 				modelRenderer.rotateAngleZ = z;
 			}
 
+			/** Full fire-dragon silhouette, without requiring water EC trail data. */
+			public void renderFlameDragon(float age, float scale) {
+				this.head.render(scale);
+				this.eyes.render(scale);
+				GlStateManager.pushMatrix();
+				GlStateManager.translate(0.0F, 6.5F * scale, 7.0F * scale);
+				for (int i = 0; i < 17; ++i) {
+					GlStateManager.rotate(MathHelper.sin(age * 0.16F - i * 0.52F) * 6.5F, 0.0F, 1.0F, 0.0F);
+					GlStateManager.rotate(MathHelper.cos(age * 0.13F - i * 0.42F) * 3.0F, 1.0F, 0.0F, 0.0F);
+					this.flameBodySegment.render(scale);
+					GlStateManager.translate(0.0F, 0.0F, 11.0F * scale);
+					GlStateManager.scale(0.935F, 0.935F, 0.935F);
+				}
+				GlStateManager.popMatrix();
+			}
+
 			@Override
 			public void setRotationAngles(float limbSwing, float f1, float ageInTicks, float f3, float headPitch, float f5, Entity e) {
 				super.setRotationAngles(limbSwing, f1, ageInTicks, f3, headPitch, f5, e);
@@ -594,6 +616,14 @@ public class EntityWaterDragon extends ElementsNarutomodMod.ModElement {
 					hornRight[i].rotateAngleY = MathHelper.cos((ageInTicks - i) * 0.3F) * 0.0873F;
 					hornLeft[i].rotateAngleX = 0.0873F + MathHelper.sin((ageInTicks - i) * 0.2F) * 0.0873F;
 					hornLeft[i].rotateAngleY = -MathHelper.cos((ageInTicks - i) * 0.3F) * 0.0873F;
+				}
+				// The fire-dragon technique reuses this head model but is not a water
+				// dragon EC. Keep its pose independent of EC's private trail state.
+				if (!(e instanceof EC)) {
+					this.head.rotateAngleX = headPitch * ((float)Math.PI / 180.0F);
+					this.jaw.rotateAngleX = 0.40F + MathHelper.sin(ageInTicks * 0.28F) * 0.13F;
+					for (ModelRenderer segment : this.spine) segment.showModel = false;
+					return;
 				}
 				EC entity = (EC)e;
 				float f6 = (float)Math.PI / 180.0F;

@@ -141,7 +141,8 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 	public enum Type {
 		BYAKUGAN,
 		SHARINGAN,
-		RINNE_TENSEI;
+		RINNE_TENSEI,
+		IMPLANTED;
 	}
 
 	public static class ClientModel {
@@ -165,6 +166,8 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 			public float eyeOffsetZ;
 			public float eyeScaleX = 1.0F;
 			public float eyeScaleY = 1.0F;
+			/** Tint only the fitted iris layer; sclera and eyelids keep their original colours. */
+			public float irisTint = 1.0F;
 	
 			public ModelHelmetSnug() {
 				this.textureWidth = 64;
@@ -318,7 +321,9 @@ public class ItemDojutsu extends ElementsNarutomodMod.ModElement {
 					if (!this.highlightHide) {
 						GlStateManager.disableLighting();
 						OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
+						GlStateManager.color(this.irisTint, this.irisTint, this.irisTint, 1.0F);
 						this.renderFittedHeadPart(this.highlight, scale);
+						GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 						int i = entityIn.getBrightnessForRender();
 						OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)(i % 65536), (float)(i / 65536));
 						GlStateManager.enableLighting();

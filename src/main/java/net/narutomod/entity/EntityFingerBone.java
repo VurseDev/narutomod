@@ -89,7 +89,7 @@ public class EntityFingerBone extends ElementsNarutomodMod.ModElement {
 
 		@Override
 		protected RayTraceResult forwardsRaycast(boolean includeEntities, boolean ignoreExcludedEntity, @Nullable Entity excludedEntity) {
-			RayTraceResult res = ProjectileHelper.forwardsRaycast(this, includeEntities, ignoreExcludedEntity, excludedEntity);
+			RayTraceResult res = net.narutomod.SusanooCombat.forwardsRaycast(this, includeEntities, ignoreExcludedEntity, excludedEntity);
 			return res != null && res.entityHit instanceof EC && ((EC)res.entityHit).shootingEntity != null 
 			 && ((EC)res.entityHit).shootingEntity.equals(this.shootingEntity) ? null : res;
 		}

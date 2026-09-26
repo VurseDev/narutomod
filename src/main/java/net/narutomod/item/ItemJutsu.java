@@ -261,6 +261,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 
 		protected boolean executeJutsu(ItemStack stack, EntityLivingBase entity, float power) {
 			JutsuEnum jutsuEnum = this.getCurrentJutsu(stack);
+			if (!net.narutomod.GenjutsuSession.canUse(entity, jutsuEnum)) return false;
 			if (entity instanceof EntityPlayer && !((EntityPlayer)entity).isCreative()
 			 && !ElementalTraining.isElementUnlocked((EntityPlayer)entity, jutsuEnum.getType())) {
 				((EntityPlayer)entity).sendStatusMessage(new TextComponentTranslation("message.narutomod.element_training.locked", ElementalTraining.getElementName(jutsuEnum.getType())), true);
@@ -292,6 +293,8 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 				pw.consume(d);
 				this.applyCustomCooldownFloor(stack, entity, jutsuEnum);
 				CustomJutsuEffects.onCast(jutsuEnum, entity, power);
+				if (jutsuEnum.usesCustomBalance()) net.narutomod.JutsuVisualEffects.cast(jutsuEnum, entity);
+				net.narutomod.SusanooCastController.executed(entity, stack, jutsuEnum);
 				return true;
 			}
 			return false;
@@ -363,6 +366,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		@Override
 		public void onUsingTick(ItemStack stack, EntityLivingBase player, int timeLeft) {
 			if (!player.world.isRemote && (!(player instanceof EntityPlayer) || PlayerTracker.isNinja((EntityPlayer)player))) {
+				net.narutomod.SusanooCastController.charge(player, stack, this.getCurrentJutsu(stack));
 				this.getCurrentJutsu(stack).jutsu.onUsingTick(stack, player, this.getPower(stack, player, timeLeft));
 			}
 		}
@@ -370,6 +374,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		@Override
 		public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityLivingBase entity, int timeLeft) {
 			if (!world.isRemote && this.executeJutsu(itemstack, entity, this.getPower(itemstack, entity, timeLeft))) {
+				net.narutomod.SusanooCastController.completed(entity, itemstack, this.getCurrentJutsu(itemstack));
 				if (entity instanceof EntityPlayer) {
 					ItemSharinganCopy.recordJutsuUse((EntityPlayer)entity, itemstack, this.getCurrentJutsu(itemstack));
 				}
@@ -378,6 +383,8 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 				if (entity instanceof EntityPlayer) {
 					((EntityPlayer)entity).addExhaustion(0.4f);
 				}
+			} else if (!world.isRemote) {
+				net.narutomod.SusanooCastController.cancel(entity);
 			}
 		}
 
@@ -442,13 +449,17 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		public void addJutsuXp(ItemStack stack, JutsuEnum jutsuIn, int xp) {
 			if (this.jutsuList.contains(jutsuIn)) {
 				this.addJutsuXp(stack, jutsuIn.index,
-				 Math.min(this.getRequiredXp(stack, jutsuIn.index) * 3 - this.getJutsuXp(stack, jutsuIn.index), xp));
+				 Math.min(this.getTrainingXpCap(stack, jutsuIn) - this.getJutsuXp(stack, jutsuIn.index), xp));
 			}
+		}
+
+		protected int getTrainingXpCap(ItemStack stack, JutsuEnum jutsu) {
+			return this.getRequiredXp(stack, jutsu) * 3;
 		}
 
 		public void addCurrentJutsuXp(ItemStack stack, int xp) {
 			this.addJutsuXp(stack, this.getCurrentJutsuIndex(stack),
-			 Math.min(this.getCurrentJutsuRequiredXp(stack) * 3 - this.getCurrentJutsuXp(stack), xp));
+			 Math.min(this.getTrainingXpCap(stack, this.getCurrentJutsu(stack)) - this.getCurrentJutsuXp(stack), xp));
 		}
 
 		private int getRequiredXp(ItemStack stack, int index) {
@@ -573,7 +584,8 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		}
 
 		protected int getCurrentJutsuIndex(ItemStack stack) {
-			return stack.hasTagCompound() ? stack.getTagCompound().getInteger(JUTSU_INDEX_KEY) : 0;
+			int index=stack.hasTagCompound() ? stack.getTagCompound().getInteger(JUTSU_INDEX_KEY) : 0;
+			return index>=0 && index<this.jutsuList.size()?index:0;
 		}
 
 		protected JutsuEnum getCurrentJutsu(ItemStack stack) {
@@ -590,7 +602,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 			}
 		}
 	
-		private void setNextJutsu(ItemStack stack, EntityLivingBase entity) {
+		protected void setNextJutsu(ItemStack stack, EntityLivingBase entity) {
 			if (!stack.hasTagCompound())
 				stack.setTagCompound(new NBTTagCompound());
 			int i = 0;
@@ -698,6 +710,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		}
 
 		public EnumActionResult canActivateJutsu(ItemStack stack, JutsuEnum jutsuIn, EntityPlayer entity) {
+			if (!net.narutomod.GenjutsuSession.canUse(entity, jutsuIn)) return EnumActionResult.FAIL;
 			if (!entity.isCreative()) {
 				if (!this.jutsuList.contains(jutsuIn) || !this.canUseJutsu(stack, jutsuIn.index, entity)) {
 					return EnumActionResult.FAIL;
@@ -740,6 +753,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 				 (this.getCurrentJutsuCooldown(stack) - world.getTotalWorldTime()) / 20), true);
 			} else if (res == EnumActionResult.SUCCESS) {
 				entity.setActiveHand(hand);
+				if (!world.isRemote) net.narutomod.SusanooCastController.prepare(entity, stack, this.getCurrentJutsu(stack));
 			}
 			return new ActionResult<ItemStack>(res, stack);
 		}
@@ -814,6 +828,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		}
 
 		default void onUsingTick(ItemStack stack, EntityLivingBase player, float power) {
+			if (net.narutomod.JutsuVisualEffects.charging(stack, player, power)) return;
 			if (this.getPowerupDelay() > 0.0f) {
 				if (player instanceof EntityPlayer) {
 					ProcedureUtils.sendStatusMessage((EntityPlayer)player, String.format("%.1f", power), true);

@@ -362,15 +362,15 @@ public class EntityScalableProjectile extends ElementsNarutomodMod.ModElement {
 		Vec3d vec3d2 = vec3d.add(motion);
 		AxisAlignedBB bigAABB = projectile.getEntityBoundingBox().expand(motion.x, motion.y, motion.z).grow(1.0d);
 		RayTraceResult raytraceresult = null;
-		double d0 = 0.0D;
+		double d0 = Double.POSITIVE_INFINITY;
 		if (scaleBlocks) {
 			BlockPos.PooledMutableBlockPos blockpos = BlockPos.PooledMutableBlockPos.retain();
 			EnumFacing facing = null;
 			for (AxisAlignedBB aabb : world.getCollisionBoxes(null, bigAABB)) {
 				RayTraceResult result = aabb.grow(projectile.width * 0.5f, projectile.height * 0.5f, projectile.width * 0.5f).calculateIntercept(vec3d, vec3d2);
 				if (result != null) {
-	 				double d = projectile.getDistanceSq((aabb.minX + aabb.maxX) * 0.5d, (aabb.minY + aabb.maxY) * 0.5d, (aabb.minZ + aabb.maxZ) * 0.5d);
-					if (d < d0 || d0 == 0.0D) {
+					double d = vec3d.distanceTo(result.hitVec);
+					if (d < d0) {
 						blockpos.setPos(aabb.minX, aabb.minY, aabb.minZ);
 						facing = result.sideHit;
 						d0 = d;
@@ -384,17 +384,19 @@ public class EntityScalableProjectile extends ElementsNarutomodMod.ModElement {
 			blockpos.release();
 		} else {
 			raytraceresult = world.rayTraceBlocks(vec3d, vec3d2, false, true, false);
+			if (raytraceresult != null) d0 = vec3d.distanceTo(raytraceresult.hitVec);
 		}
 		if (includeEntities) {
 			Entity entity = null;
 			Vec3d hitvec = null;
 			for (Entity entity1 : world.getEntitiesWithinAABBExcludingEntity(projectile, bigAABB)) {
+				if (net.narutomod.SusanooCombat.isOwnSusanoo(entity1, excludedEntity)) continue;
 				if (entity1.canBeCollidedWith() && (ignoreExcludedEntity || !entity1.equals(excludedEntity)) && !entity1.noClip) {
 					AxisAlignedBB aabb = entity1.getEntityBoundingBox().grow(projectile.width * 0.5f, projectile.height * 0.5f, projectile.width * 0.5f);
 					RayTraceResult result = aabb.calculateIntercept(vec3d, vec3d2);
 					if (result != null) {
 						double d = vec3d.distanceTo(result.hitVec);
-						if (d < d0 || d0 == 0.0D) {
+						if (d < d0) {
 							entity = entity1;
 							hitvec = result.hitVec;
 							d0 = d;

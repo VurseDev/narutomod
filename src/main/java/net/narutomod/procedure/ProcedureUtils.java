@@ -749,6 +749,7 @@ public class ProcedureUtils extends ElementsNarutomodMod.ModElement {
 		RayTraceResult entityTrace = null;
 		for (int j = 0; j < list.size(); ++j) {
 			Entity entity1 = list.get(j);
+			if (net.narutomod.SusanooCombat.isOwnSusanoo(entity1, entity)) continue;
 			if (entity1.getLowestRidingEntity() == entity.getLowestRidingEntity())
 				continue;
 			AxisAlignedBB axisalignedbb = entity1.getEntityBoundingBox().grow(bbGrow * vec3d.distanceTo(entity1.getPositionVector()) / 32d);

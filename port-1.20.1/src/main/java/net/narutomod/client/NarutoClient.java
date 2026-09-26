@@ -15,6 +15,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.narutomod.NarutoMod;
+import net.narutomod.CoreData;
 import org.lwjgl.glfw.GLFW;
 
 public final class NarutoClient {
@@ -69,14 +70,23 @@ public final class NarutoClient {
             graphics.fill(left, top, left + 256, top + 192, 0xEE101010);
             graphics.fill(left + 6, top + 6, left + 250, top + 186, 0xAA2A160D);
             graphics.drawCenteredString(this.font, this.title, left + 128, top + 12, 0xFFFFCC55);
-            graphics.drawString(this.font, "Port screen active - stat sync comes next.", left + 18, top + 30, 0xFFE6D39A, false);
+            if (Minecraft.getInstance().player != null) {
+                graphics.drawString(this.font, "Rank: " + CoreData.getRank(Minecraft.getInstance().player), left + 18, top + 30, 0xFFE6D39A, false);
+                graphics.drawString(this.font, "Points: " + CoreData.getPoints(Minecraft.getInstance().player)
+                        + "  Available: " + CoreData.getAvailable(Minecraft.getInstance().player), left + 130, top + 30, 0xFFE6D39A, false);
+            }
             for (int i = 0; i < STAT_NAMES.length; i++) {
                 int y = top + 52 + i * 18;
                 graphics.drawString(this.font, STAT_NAMES[i], left + 18, y, 0xFFFFFFFF, false);
-                graphics.drawString(this.font, "0", left + 150, y, 0xFFFFCC66, false);
-                graphics.drawString(this.font, "+", left + 196, y, 0xFF66FF66, false);
+                long value = Minecraft.getInstance().player == null ? 0L : CoreData.getStat(Minecraft.getInstance().player, CoreData.STAT_KEYS[i]);
+                graphics.drawString(this.font, Long.toString(value), left + 150, y, 0xFFFFCC66, false);
+                graphics.drawString(this.font, "limit " + (Minecraft.getInstance().player == null ? 0 : CoreData.getLimit(Minecraft.getInstance().player)), left + 196, y, 0xFF66FF66, false);
             }
-            graphics.drawString(this.font, "SPI will reduce jutsu charge time.", left + 18, top + 166, 0xFFB9B9B9, false);
+            if (Minecraft.getInstance().player != null) {
+                graphics.drawString(this.font, String.format("Chakra %.0f / %.0f   SPI regen %.2f/s",
+                        CoreData.chakra(Minecraft.getInstance().player), CoreData.maxChakra(Minecraft.getInstance().player),
+                        CoreData.spiRegenPerSecond(Minecraft.getInstance().player)), left + 18, top + 166, 0xFFB9B9B9, false);
+            }
             LivingEntity player = Minecraft.getInstance().player;
             if (player != null) {
                 InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, left + 106, top + 152, 45, left + 106 - mouseX, top + 74 - mouseY, player);

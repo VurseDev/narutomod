@@ -37,6 +37,7 @@ import java.util.List;
 public class KeyBindingDojutsuControl extends ElementsNarutomodMod.ModElement {
 	private KeyBinding toggleKey;
 	private KeyBinding confirmKey;
+    private KeyBinding rightEyeKey;
 	private int selectedIndex;
 	private int confirmedIndex;
 	private long showUntil;
@@ -57,6 +58,12 @@ public class KeyBindingDojutsuControl extends ElementsNarutomodMod.ModElement {
 		this.confirmKey = new KeyBinding("key.mcreator.dojutsu_confirm", Keyboard.KEY_RETURN, "key.mcreator.category");
 		ClientRegistry.registerKeyBinding(this.toggleKey);
 		ClientRegistry.registerKeyBinding(this.confirmKey);
+        this.rightEyeKey=new KeyBinding("key.mcreator.ocular_right",Keyboard.KEY_H,"key.mcreator.category");
+        this.rightEyeKey.setKeyConflictContext(new net.minecraftforge.client.settings.IKeyConflictContext(){
+            public boolean isActive(){Minecraft mc=Minecraft.getMinecraft();return mc.currentScreen==null&&mc.player!=null&&net.narutomod.OcularSystem.enabled(mc.player);}
+            public boolean conflicts(net.minecraftforge.client.settings.IKeyConflictContext other){return isActive()&&other.isActive();}
+        });
+        ClientRegistry.registerKeyBinding(this.rightEyeKey);
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 
@@ -67,6 +74,12 @@ public class KeyBindingDojutsuControl extends ElementsNarutomodMod.ModElement {
 		if (mc.currentScreen != null || mc.player == null) {
 			return;
 		}
+		if (net.narutomod.OcularSystem.enabled(mc.player)) {
+            if(this.toggleKey.isPressed())NarutomodMod.PACKET_HANDLER.sendToServer(new ToggleMessage(mc.player.isSneaking()?"ocular:focus_left":"ocular:left"));
+            if(this.rightEyeKey.isPressed())NarutomodMod.PACKET_HANDLER.sendToServer(new ToggleMessage(mc.player.isSneaking()?"ocular:focus_right":"ocular:right"));
+			return;
+		}
+        while(this.rightEyeKey.isPressed()){} // H has no action before surgery.
 		List<ItemStack> available = DojutsuControl.getOwnedDojutsuStacks(mc.player);
 		if (available.isEmpty()) {
 			return;
@@ -105,6 +118,17 @@ public class KeyBindingDojutsuControl extends ElementsNarutomodMod.ModElement {
 		if (mc.player == null || mc.world == null) {
 			return;
 		}
+        if(net.narutomod.OcularSystem.enabled(mc.player)){
+            net.narutomod.OcularState state=net.narutomod.OcularSystem.state(mc.player);ScaledResolution screen=new ScaledResolution(mc);
+            int x=screen.getScaledWidth()/2,y=screen.getScaledHeight()-62;
+            for(int side=0;side<2;side++){
+                net.narutomod.OcularState.Eye eye=state.eyes[side];String status=eye==null?"--":eye.covered?"COVER":eye.active?"ON":"OFF";
+                String key=org.lwjgl.input.Keyboard.getKeyName(side==0?toggleKey.getKeyCode():rightEyeKey.getKeyCode());
+                String label=(state.selected==side?"> ":"")+key+" "+(side==0?"L ":"R ")+status;
+                mc.fontRenderer.drawStringWithShadow(label,x+(side==0?-91:12),y,eye!=null&&eye.usable()?0xBCE7BD:0xB8B8B8);
+            }
+            return;
+        }
 		List<ItemStack> available = DojutsuControl.getOwnedDojutsuStacks(mc.player);
 		if (available.isEmpty() || mc.world.getTotalWorldTime() > this.showUntil) {
 			return;

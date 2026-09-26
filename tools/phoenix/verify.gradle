@@ -1,0 +1,13 @@
+// gradle -I tools/phoenix/verify.gradle verifyPhoenix --offline --no-daemon
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            project.tasks.create(name: 'verifyPhoenix', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.PhoenixChecks'
+                workingDir project.projectDir
+            }
+        }
+    }
+}

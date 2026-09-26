@@ -154,6 +154,7 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 	}
 
 	private static boolean wearingThreeTomoe(EntityPlayer player) {
+		if (net.narutomod.OcularSystem.enabled(player)) return net.narutomod.OcularSystem.threeTomoe(player);
 		return player.getItemStackFromSlot(EntityEquipmentSlot.HEAD).getItem() == ItemSharinganTomoe3.helmet;
 	}
 
@@ -258,7 +259,8 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 
 	public static boolean attemptCopy(EntityPlayer player, ItemStack sharinganStack) {
 		if (player.world.isRemote || !(player instanceof EntityPlayerMP)) return true;
-		if (sharinganStack.getItem() != ItemSharinganTomoe3.helmet || !((ItemDojutsu.Base)sharinganStack.getItem()).isOwner(sharinganStack, player)) {
+		if (sharinganStack.getItem() != ItemSharinganTomoe3.helmet || (!((ItemDojutsu.Base)sharinganStack.getItem()).isOwner(sharinganStack, player)
+			&& !net.narutomod.OcularSystem.allowsCopy(player, sharinganStack))) {
 			player.sendStatusMessage(new TextComponentTranslation("message.narutomod.sharingan_copy.requires_3_tomoe"), true);
 			return true;
 		}
@@ -321,7 +323,12 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 				if (!world.isRemote && expired(stack, world)) stack.shrink(1);
 				return new ActionResult<ItemStack>(EnumActionResult.FAIL, stack);
 			}
+			ItemJutsu.JutsuEnum jutsu = findJutsu(stack.getTagCompound());
+			if (jutsu == null || !net.narutomod.GenjutsuSession.canUse(player, jutsu)) {
+				return new ActionResult<ItemStack>(EnumActionResult.FAIL, stack);
+			}
 			player.setActiveHand(hand);
+			if (!world.isRemote) net.narutomod.SusanooCastController.prepare(player, stack, jutsu);
 			return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, stack);
 		}
 
@@ -329,9 +336,19 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 		public void onUsingTick(ItemStack stack, net.minecraft.entity.EntityLivingBase player, int timeLeft) {
 			if (!player.world.isRemote && player instanceof EntityPlayer && stack.hasTagCompound()) {
 				ItemJutsu.JutsuEnum jutsu = findJutsu(stack.getTagCompound());
+				if (!isOwner(stack, (EntityPlayer)player) || expired(stack, player.world) || jutsu == null
+				 || !net.narutomod.GenjutsuSession.canUse(player, jutsu)) {
+					net.narutomod.SusanooCastController.cancel(player);
+					player.resetActiveHand();
+					return;
+				}
 				ItemStack temp = jutsu == null ? ItemStack.EMPTY : makeTemporaryOriginal((EntityPlayer)player, stack, jutsu);
 				if (!temp.isEmpty()) {
+					net.narutomod.SusanooCastController.charge(player, stack, jutsu);
 					jutsu.jutsu.onUsingTick(temp, player, ((ItemJutsu.Base)temp.getItem()).getPower(temp, player, timeLeft));
+				} else {
+					net.narutomod.SusanooCastController.cancel(player);
+					player.resetActiveHand();
 				}
 			}
 		}
@@ -340,11 +357,14 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 		public void onPlayerStoppedUsing(ItemStack stack, World world, net.minecraft.entity.EntityLivingBase entity, int timeLeft) {
 			if (world.isRemote || !(entity instanceof EntityPlayer)) return;
 			EntityPlayer player = (EntityPlayer)entity;
+			// Failed release paths restore the hands; success below replaces cancellation with release.
+			net.narutomod.SusanooCastController.cancel(player);
 			if (!stack.hasTagCompound() || !isOwner(stack, player) || expired(stack, world)) {
 				stack.shrink(1);
 				return;
 			}
 			ItemJutsu.JutsuEnum jutsu = findJutsu(stack.getTagCompound());
+			if (jutsu == null || !net.narutomod.GenjutsuSession.canUse(player, jutsu)) return;
 			ItemStack temp = jutsu == null ? ItemStack.EMPTY : makeTemporaryOriginal(player, stack, jutsu);
 			if (temp.isEmpty()) {
 				stack.shrink(1);
@@ -367,6 +387,7 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 			}
 			if (jutsu.jutsu.createJutsu(temp, entity, power)) {
 				Chakra.pathway(entity).consume(cost);
+				net.narutomod.SusanooCastController.completed(entity, stack, jutsu);
 				stack.shrink(1);
 				player.sendStatusMessage(new TextComponentTranslation("message.narutomod.sharingan_copy.forgotten"), true);
 			}
@@ -410,7 +431,8 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 			if (!(event.getSource().getTrueSource() instanceof EntityPlayer)) return;
 			EntityPlayer attacker = (EntityPlayer)event.getSource().getTrueSource();
 			if (!wearingThreeTomoe(attacker)) return;
-			addCopyXp(attacker.getItemStackFromSlot(EntityEquipmentSlot.HEAD), 1);
+			if (net.narutomod.OcularSystem.enabled(attacker)) net.narutomod.OcularSystem.trainCopy(attacker);
+			else addCopyXp(attacker.getItemStackFromSlot(EntityEquipmentSlot.HEAD), 1);
 		}
 	}
 }

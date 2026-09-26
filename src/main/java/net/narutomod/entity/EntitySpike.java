@@ -159,6 +159,7 @@ public class EntitySpike extends ElementsNarutomodMod.ModElement {
 				AxisAlignedBB bigAABB = this.getEntityBoundingBox().expand(this.motionX, this.motionY, this.motionZ).grow(1.0D);
 				double d0 = 0.0D;
 				for (Entity entity1 : this.world.getEntitiesWithinAABBExcludingEntity(this, bigAABB)) {
+					if (net.narutomod.SusanooCombat.isOwnSusanoo(entity1, excludedEntity)) continue;
 					if (entity1.canBeCollidedWith() && (ignoreExcludedEntity || !entity1.equals(excludedEntity)) && !entity1.noClip) {
 						RayTraceResult result = entity1.getEntityBoundingBox().calculateIntercept(vec1, vec2);
 						if (result != null) {

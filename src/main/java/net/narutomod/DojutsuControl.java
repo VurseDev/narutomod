@@ -4,6 +4,8 @@ import net.narutomod.item.ItemByakugan;
 import net.narutomod.item.ItemDojutsu;
 import net.narutomod.item.ItemMangekyoSharingan;
 import net.narutomod.item.ItemMangekyoSharinganEternal;
+import net.narutomod.item.ItemMangekyoSharinganMadara;
+import net.narutomod.item.ItemMangekyoSharinganMadaraEternal;
 import net.narutomod.item.ItemMangekyoSharinganObito;
 import net.narutomod.item.ItemMangekyoSharinganObitoFire;
 import net.narutomod.item.ItemNormalEyes;
@@ -85,6 +87,14 @@ public class DojutsuControl extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static void toggleSelected(EntityPlayerMP player, String registryName) {
+		if (OcularSystem.enabled(player)) {
+            if ("ocular:left".equals(registryName)) OcularSystem.toggleSide(player,0);
+            else if ("ocular:right".equals(registryName)) OcularSystem.toggleSide(player,1);
+            else if ("ocular:focus_left".equals(registryName)) OcularSystem.focus(player,0);
+            else if ("ocular:focus_right".equals(registryName)) OcularSystem.focus(player,1);
+            return;
+        }
+        if(registryName==null||registryName.startsWith("ocular:")||!registryName.matches("[a-z0-9_.-]+:[a-z0-9_./-]+"))return;
 		Item selected = Item.REGISTRY.getObject(new ResourceLocation(registryName));
 		if (!(selected instanceof ItemDojutsu.Base)) {
 			player.sendStatusMessage(new TextComponentString(TextFormatting.RED + "Selected dojutsu is unavailable."), true);
@@ -281,6 +291,8 @@ public class DojutsuControl extends ElementsNarutomodMod.ModElement {
 		if (item == ItemMangekyoSharinganObito.helmet) return 15;
 		if (item == ItemMangekyoSharinganObitoFire.helmet) return 16;
 		if (item == ItemMangekyoSharinganEternal.helmet) return 17;
+		if (item == ItemMangekyoSharinganMadara.helmet) return 18;
+		if (item == ItemMangekyoSharinganMadaraEternal.helmet) return 19;
 		if (item == ItemByakugan.helmet) return 30;
 		if (item == ItemTenseigan.helmet) return 31;
 		if (item == ItemRinnegan.helmet) return 40;

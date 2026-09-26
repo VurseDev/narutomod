@@ -4,6 +4,7 @@ import net.narutomod.item.ItemTenseigan;
 import net.narutomod.item.ItemRinnegan;
 import net.narutomod.item.ItemOnBody;
 import net.narutomod.item.ItemMangekyoSharinganEternal;
+import net.narutomod.item.ItemMangekyoSharinganMadaraEternal;
 import net.narutomod.ModConfig;
 import net.narutomod.ElementsNarutomodMod;
 
@@ -34,7 +35,8 @@ public class ProcedureSyncInventory extends ElementsNarutomodMod.ModElement {
 			if (((!((entity instanceof EntityPlayer) ? ((EntityPlayer) entity).capabilities.isCreativeMode : false))
 					&& ModConfig.REMOVE_CHEAT_DOJUTSUS)) {
 				if ((((entity instanceof EntityPlayer)
-						? ((EntityPlayer) entity).inventory.hasItemStack(new ItemStack(ItemMangekyoSharinganEternal.helmet, (int) (1)))
+						? (((EntityPlayer) entity).inventory.hasItemStack(new ItemStack(ItemMangekyoSharinganEternal.helmet, (int) (1)))
+						  || ((EntityPlayer) entity).inventory.hasItemStack(new ItemStack(ItemMangekyoSharinganMadaraEternal.helmet)))
 						: false)
 						&& (!(((entity instanceof EntityPlayerMP) && ((entity).world instanceof WorldServer))
 								? ((EntityPlayerMP) entity).getAdvancements()
@@ -49,6 +51,7 @@ public class ProcedureSyncInventory extends ElementsNarutomodMod.ModElement {
 					if (entity instanceof EntityPlayer)
 						((EntityPlayer) entity).inventory.clearMatchingItems(new ItemStack(ItemMangekyoSharinganEternal.helmet, (int) (1)).getItem(),
 								-1, (int) (-1), null);
+					((EntityPlayer) entity).inventory.clearMatchingItems(ItemMangekyoSharinganMadaraEternal.helmet, -1, -1, null);
 				}
 				if ((((entity instanceof EntityPlayer)
 						? ((EntityPlayer) entity).inventory.hasItemStack(new ItemStack(ItemRinnegan.helmet, (int) (1)))

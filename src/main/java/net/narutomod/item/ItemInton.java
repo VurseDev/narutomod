@@ -74,6 +74,7 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 	@Override
 	public void preInit(FMLPreInitializationEvent event) {
 		elements.addNetworkMessage(ClientGenjutsuMessage.Handler.class, ClientGenjutsuMessage.class, Side.CLIENT);
+		elements.addNetworkMessage(GenjutsuCastMessage.Handler.class, GenjutsuCastMessage.class, Side.CLIENT);
 	}
 
 	@Override
@@ -172,15 +173,10 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 			if (target == null || !Genjutsu.canTargetBeAffected(entity, target)) return false;
 			float mastery = mastery(stack, FALSE_OPENING);
 			int duration = 80 + (int)(mastery * 80f);
-			target.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, duration, 0, false, true));
-			target.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, duration / 2, 1, false, false));
 			markGenjutsu(entity, target, duration, 0);
 			entity.world.playSound(null, target.posX, target.posY, target.posZ,
 			 SoundEvent.REGISTRY.getObject(new ResourceLocation("narutomod:genjutsu")), SoundCategory.PLAYERS, 1.0f, 1.15f);
-			if (target instanceof EntityPlayerMP) {
-				ClientGenjutsuMessage.send((EntityPlayerMP)target, 0, duration);
-				ProcedureSync.MobAppearanceParticle.send((EntityPlayerMP)target, entity.getEntityId());
-			}
+			net.narutomod.GenjutsuSession.begin(entity, target, 0, duration);
 			CustomJutsuEffects.onGenjutsu(entity, target, 0, mastery);
 			return true;
 		}
@@ -198,37 +194,29 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 			EntityLivingBase target = getTarget(entity, 22d, 2.5d);
 			if (target == null || !Genjutsu.canTargetBeAffected(entity, target)) return false;
 			float mastery = mastery(stack, this.jutsu());
-			int duration = 100 + (int)(mastery * 100f);
-			entity.world.playSound(null, target.posX, target.posY, target.posZ,
-			 SoundEvent.REGISTRY.getObject(new ResourceLocation("narutomod:genjutsu")), SoundCategory.PLAYERS, 1.0f, 0.8f);
-			if (target instanceof EntityPlayerMP) {
-				ClientGenjutsuMessage.send((EntityPlayerMP)target, this.type, duration);
-			}
+			int duration = net.narutomod.GenjutsuSession.boundedDuration(this.type, 100 + (int)(mastery * 100f));
+			// The affected player hears one private cue at their screen; nearby observers hear the caster.
+			entity.world.playSound(target instanceof EntityPlayer ? (EntityPlayer)target : null,
+			 entity.posX, entity.posY, entity.posZ,
+			 SoundEvent.REGISTRY.getObject(new ResourceLocation("narutomod:sharingansfx")), SoundCategory.PLAYERS, 0.85f, 1.0f);
 			if (this.type == 1) {
-				target.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, duration, 0, false, true));
-				target.addPotionEffect(new PotionEffect(MobEffects.MINING_FATIGUE, duration, 1, false, false));
 				if (target instanceof EntityPlayer) {
-					((EntityPlayer)target).sendStatusMessage(new TextComponentString(TextFormatting.DARK_PURPLE + "Cooldown: " + (20 + entity.getRNG().nextInt(80)) + "s"), true);
+					((EntityPlayer)target).sendStatusMessage(new net.minecraft.util.text.TextComponentTranslation("message.narutomod.memory_fracture"), true);
 				}
 			} else if (this.type == 2) {
-				target.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, duration, 2, false, false));
-				target.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, duration, 2, false, false));
 				if (entity.getRNG().nextFloat() < 0.45f + mastery * 0.35f) {
 					target.resetActiveHand();
 				}
 			} else if (this.type == 3) {
 				target.attackEntityFrom(DamageSource.MAGIC, 7f + mastery * 7f);
-				target.addPotionEffect(new PotionEffect(PotionParalysis.potion, 35 + (int)(mastery * 35f), 1, false, false));
-				target.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, duration + 60, 2, false, false));
 			} else {
-				target.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, duration, 1, false, true));
-				target.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, duration, 2, false, false));
-				target.setFire(2);
+				// Illusory flames must not ignite the real body or terrain.
 				target.attackEntityFrom(DamageSource.MAGIC, 3f + mastery * 3f);
 				Chakra.pathway(target).consume(10d + mastery * 25d);
 			}
 			CustomJutsuEffects.onGenjutsu(entity, target, this.type, mastery);
 			markGenjutsu(entity, target, duration, this.type);
+			net.narutomod.GenjutsuSession.begin(entity, target, this.type, duration);
 			target.setRevengeTarget(entity);
 			return true;
 		}
@@ -277,6 +265,9 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 			player.sendStatusMessage(new TextComponentString(TextFormatting.DARK_PURPLE + "Your Chakra Pulse failed to overpower the genjutsu."), true);
 			return false;
 		}
+		if (net.narutomod.GenjutsuSession.active(player)) {
+			net.narutomod.GenjutsuSession.clear(player);
+		} else {
 		player.removePotionEffect(PotionParalysis.potion);
 		player.removePotionEffect(MobEffects.NAUSEA);
 		player.removePotionEffect(MobEffects.BLINDNESS);
@@ -284,6 +275,7 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 		player.removePotionEffect(MobEffects.SLOWNESS);
 		player.removePotionEffect(MobEffects.MINING_FATIGUE);
 		player.extinguish();
+		}
 		player.getEntityData().removeTag(GENJUTSU_ROOT);
 		if (player instanceof EntityPlayerMP) {
 			ClientGenjutsuMessage.clear((EntityPlayerMP)player);
@@ -294,9 +286,30 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 		return true;
 	}
 
+	public static class GenjutsuCastMessage implements IMessage {
+		private int caster, type;
+		public GenjutsuCastMessage() { }
+		private GenjutsuCastMessage(int casterIn, int typeIn) { caster = casterIn; type = typeIn; }
+		public static void send(EntityLivingBase caster, int type) {
+			NarutomodMod.PACKET_HANDLER.sendToAllAround(new GenjutsuCastMessage(caster.getEntityId(), type),
+			 new net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint(caster.dimension, caster.posX, caster.posY, caster.posZ, 48));
+		}
+		@Override public void toBytes(ByteBuf buf) { buf.writeInt(caster); buf.writeInt(type); }
+		@Override public void fromBytes(ByteBuf buf) { caster = buf.readInt(); type = buf.readInt(); }
+		public static class Handler implements IMessageHandler<GenjutsuCastMessage, IMessage> {
+			@Override @SideOnly(Side.CLIENT)
+			public IMessage onMessage(GenjutsuCastMessage msg, MessageContext ctx) {
+				net.minecraft.client.Minecraft.getMinecraft().addScheduledTask(() ->
+				 net.narutomod.client.ClientGenjutsuOverlay.cast(msg.caster, msg.type));
+				return null;
+			}
+		}
+	}
+
 	public static class ClientGenjutsuMessage implements IMessage {
 		private int type;
 		private int ticks;
+		private int caster = -1;
 		public ClientGenjutsuMessage() { }
 		public ClientGenjutsuMessage(int typeIn, int ticksIn) {
 			this.type = typeIn;
@@ -305,22 +318,29 @@ public class ItemInton extends ElementsNarutomodMod.ModElement {
 		public static void send(EntityPlayerMP player, int typeIn, int ticksIn) {
 			NarutomodMod.PACKET_HANDLER.sendTo(new ClientGenjutsuMessage(typeIn, ticksIn), player);
 		}
+		public static void send(EntityPlayerMP player, int typeIn, int ticksIn, int casterIn) {
+			ClientGenjutsuMessage message = new ClientGenjutsuMessage(typeIn, ticksIn);
+			message.caster = casterIn;
+			NarutomodMod.PACKET_HANDLER.sendTo(message, player);
+		}
 		public static void clear(EntityPlayerMP player) {
 			NarutomodMod.PACKET_HANDLER.sendTo(new ClientGenjutsuMessage(-1, 0), player);
 		}
 		public void toBytes(ByteBuf buf) {
 			buf.writeInt(this.type);
 			buf.writeInt(this.ticks);
+			buf.writeInt(this.caster);
 		}
 		public void fromBytes(ByteBuf buf) {
 			this.type = buf.readInt();
 			this.ticks = buf.readInt();
+			this.caster = buf.readInt();
 		}
 		public static class Handler implements IMessageHandler<ClientGenjutsuMessage, IMessage> {
 			@SideOnly(Side.CLIENT)
 			@Override
 			public IMessage onMessage(ClientGenjutsuMessage message, MessageContext context) {
-				net.narutomod.client.ClientGenjutsuOverlay.handleMessage(message.type, message.ticks);
+				net.narutomod.client.ClientGenjutsuOverlay.handleMessage(message.type, message.ticks, message.caster);
 				return null;
 			}
 		}

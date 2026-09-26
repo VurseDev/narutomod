@@ -1,0 +1,737 @@
+{
+  "meta": {
+    "format_version": "4.10",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "Genjutsu illusion actor",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "uuid": "03230915-d339-16c1-6b79-f2898b633738",
+      "name": "illusionbody_cube",
+      "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+      "from": [
+        -4,
+        12,
+        -2
+      ],
+      "to": [
+        4,
+        24,
+        2
+      ],
+      "origin": [
+        0,
+        24,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            18,
+            0,
+            22,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            9,
+            0,
+            17,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            23,
+            0,
+            27,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            36,
+            26,
+            44,
+            30
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            45,
+            26,
+            53,
+            30
+          ],
+          "rotation": 0,
+          "texture": 0
+        }
+      },
+      "type": "cube"
+    },
+    {
+      "uuid": "46b2f90c-c9b3-74e1-0433-c50fe91fdd49",
+      "name": "illusionhead_cube",
+      "parent": "7b273a20-d76b-b50f-4436-6476c2d0d395",
+      "from": [
+        -4,
+        24,
+        -4
+      ],
+      "to": [
+        4,
+        32,
+        4
+      ],
+      "origin": [
+        0,
+        24,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            45,
+            13,
+            53,
+            21
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            54,
+            13,
+            62,
+            21
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            0,
+            26,
+            8,
+            34
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            9,
+            26,
+            17,
+            34
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            18,
+            26,
+            26,
+            34
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            27,
+            26,
+            35,
+            34
+          ],
+          "rotation": 0,
+          "texture": 0
+        }
+      },
+      "type": "cube"
+    },
+    {
+      "uuid": "b9ce03aa-e053-60c6-159e-158142fca43b",
+      "name": "illusionarm_right_cube",
+      "parent": "ca65923c-0975-54bb-8396-eaae6c92dfcf",
+      "from": [
+        -8,
+        12,
+        -2
+      ],
+      "to": [
+        -4,
+        24,
+        2
+      ],
+      "origin": [
+        -6,
+        22,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            28,
+            0,
+            32,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            33,
+            0,
+            37,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            38,
+            0,
+            42,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            43,
+            0,
+            47,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            54,
+            26,
+            58,
+            30
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            59,
+            26,
+            63,
+            30
+          ],
+          "rotation": 0,
+          "texture": 0
+        }
+      },
+      "type": "cube"
+    },
+    {
+      "uuid": "0ae29153-a33d-c217-45e5-5e1a7cdaa855",
+      "name": "illusionarm_left_cube",
+      "parent": "baee0029-1e86-c347-6afa-980185af2892",
+      "from": [
+        4,
+        12,
+        -2
+      ],
+      "to": [
+        8,
+        24,
+        2
+      ],
+      "origin": [
+        6,
+        22,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            48,
+            0,
+            52,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            53,
+            0,
+            57,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            58,
+            0,
+            62,
+            12
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            0,
+            13,
+            4,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            35,
+            4,
+            39
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            5,
+            35,
+            9,
+            39
+          ],
+          "rotation": 0,
+          "texture": 0
+        }
+      },
+      "type": "cube"
+    },
+    {
+      "uuid": "008f0ca7-9151-87a5-f4d5-074df1bb82d6",
+      "name": "illusionleg_right_cube",
+      "parent": "4e0a0011-9d3c-1f42-801c-5f3e658563bb",
+      "from": [
+        -4,
+        0,
+        -2
+      ],
+      "to": [
+        0,
+        12,
+        2
+      ],
+      "origin": [
+        -2,
+        12,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            13,
+            9,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            10,
+            13,
+            14,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            15,
+            13,
+            19,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            20,
+            13,
+            24,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            10,
+            35,
+            14,
+            39
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            15,
+            35,
+            19,
+            39
+          ],
+          "rotation": 0,
+          "texture": 0
+        }
+      },
+      "type": "cube"
+    },
+    {
+      "uuid": "9369a202-5198-ce00-f11c-49f63dbd2fcf",
+      "name": "illusionleg_left_cube",
+      "parent": "68a4f6b4-8f92-ee1d-3e20-d91205c7cdfc",
+      "from": [
+        0,
+        0,
+        -2
+      ],
+      "to": [
+        4,
+        12,
+        2
+      ],
+      "origin": [
+        2,
+        12,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "inflate": 0,
+      "visibility": true,
+      "box_uv": false,
+      "uv_offset": [
+        0,
+        0
+      ],
+      "mirror_uv": false,
+      "faces": {
+        "north": {
+          "uv": [
+            25,
+            13,
+            29,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            30,
+            13,
+            34,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            35,
+            13,
+            39,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            40,
+            13,
+            44,
+            25
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            20,
+            35,
+            24,
+            39
+          ],
+          "rotation": 0,
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            25,
+            35,
+            29,
+            39
+          ],
+          "rotation": 0,
+          "texture": 0
+        }
+      },
+      "type": "cube"
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "4c443789-4f9e-8785-b2fc-345a27e608fc",
+      "name": "illusionroot",
+      "parent": null,
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "visibility": true,
+      "children": [
+        {
+          "uuid": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+          "name": "illusionbody",
+          "parent": "4c443789-4f9e-8785-b2fc-345a27e608fc",
+          "origin": [
+            0,
+            24,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "visibility": true,
+          "children": [
+            "03230915-d339-16c1-6b79-f2898b633738",
+            {
+              "uuid": "7b273a20-d76b-b50f-4436-6476c2d0d395",
+              "name": "illusionhead",
+              "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+              "origin": [
+                0,
+                24,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "visibility": true,
+              "children": [
+                "46b2f90c-c9b3-74e1-0433-c50fe91fdd49"
+              ]
+            },
+            {
+              "uuid": "ca65923c-0975-54bb-8396-eaae6c92dfcf",
+              "name": "illusionarm_right",
+              "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+              "origin": [
+                -6,
+                22,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "visibility": true,
+              "children": [
+                "b9ce03aa-e053-60c6-159e-158142fca43b"
+              ]
+            },
+            {
+              "uuid": "baee0029-1e86-c347-6afa-980185af2892",
+              "name": "illusionarm_left",
+              "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+              "origin": [
+                6,
+                22,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "visibility": true,
+              "children": [
+                "0ae29153-a33d-c217-45e5-5e1a7cdaa855"
+              ]
+            },
+            {
+              "uuid": "4e0a0011-9d3c-1f42-801c-5f3e658563bb",
+              "name": "illusionleg_right",
+              "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+              "origin": [
+                -2,
+                12,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "visibility": true,
+              "children": [
+                "008f0ca7-9151-87a5-f4d5-074df1bb82d6"
+              ]
+            },
+            {
+              "uuid": "68a4f6b4-8f92-ee1d-3e20-d91205c7cdfc",
+              "name": "illusionleg_left",
+              "parent": "07b6c964-b13a-5e11-88f1-e3c247028fca",
+              "origin": [
+                2,
+                12,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "visibility": true,
+              "children": [
+                "9369a202-5198-ce00-f11c-49f63dbd2fcf"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "uuid": "88cad543-5879-14bd-37f8-30dc64b64c7b",
+      "name": "genjutsu_actor.png",
+      "id": "0",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,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"
+    }
+  ],
+  "animations": []
+}

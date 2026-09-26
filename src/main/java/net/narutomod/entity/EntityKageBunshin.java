@@ -97,6 +97,13 @@ public class EntityKageBunshin extends ElementsNarutomodMod.ModElement {
 		//private InventoryPlayer summonerInventory;
 		private boolean isOriginal;
 		private DamageSource deathCause;
+		private boolean expendedByThrow;
+
+		/** Consume the real clone as ammunition, without refunding its split health/chakra. */
+		public void consumeForThrow() {
+			this.expendedByThrow = true;
+			this.setDead();
+		}
 
 		public EC(World world) {
 			super(world);
@@ -197,6 +204,7 @@ public class EntityKageBunshin extends ElementsNarutomodMod.ModElement {
 				}
 				if (flag && summoner != null) {
 					Jutsu.updateClones(summoner, this);
+					if (this.expendedByThrow) return;
 					float f0 = this.getHealth();
 					float f1 = f0 / this.getMaxHealth();
 					Chakra.pathway(summoner).consume(-Chakra.pathway(this).getAmount() * f1 * 0.9, false);

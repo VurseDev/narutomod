@@ -79,6 +79,28 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 			return false;
 		}
 
+		/** Eternal is an endurance property, not permission to use every eye's technique. */
+		public boolean canUseAmaterasu() {
+			return this.getSubType() == Type.AMATERASU || this == ItemMangekyoSharinganEternal.helmet;
+		}
+
+		public boolean canUseKamui() {
+			return this.getSubType() == Type.KAMUI || this == ItemMangekyoSharinganEternal.helmet;
+		}
+
+		/** Applies deliberate ability strain without ever breaking or deleting the eye item. */
+		public void addOcularStrain(ItemStack stack, EntityLivingBase wearer, int amount) {
+			if (wearer.world.isRemote || stack.getItem() != this || amount <= 0 || this.isEternal()
+			 || this.getMaxDamage() <= 0 || (wearer instanceof EntityPlayer && ((EntityPlayer)wearer).isCreative())) return;
+			long increased = (long)this.getDamage(stack) + (long)amount * (this.isOwner(stack, wearer) ? 1 : 3);
+			int damage = (int)Math.min(this.getMaxDamage() - 1L, increased);
+			this.forceDamage(stack, damage);
+			if (damage >= this.getMaxDamage() - 3) {
+				if (!stack.hasTagCompound()) stack.setTagCompound(new NBTTagCompound());
+				stack.getTagCompound().setBoolean("sharingan_blinded", true);
+			}
+		}
+
 		@SideOnly(Side.CLIENT)
 		@Override
 		public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
@@ -115,9 +137,13 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 			 && (!((Base)itemstack.getItem()).isEternal() || !this.isOwner(itemstack, entity))
 			 && (entity.getEntityData().getBoolean("amaterasu_active")
 			  || entity.getEntityData().getBoolean("susanoo_activated") || entity.getEntityData().getBoolean("kamui_teleport"))) {
-			 	((Base)itemstack.getItem()).canDamage = true;
-				itemstack.damageItem(this.isOwner(itemstack, entity) ? 3 : 9, entity);
-				((Base)itemstack.getItem()).canDamage = false;
+				if (this.getSubType() == Type.MADARA) {
+					this.addOcularStrain(itemstack, entity, 3);
+				} else {
+					((Base)itemstack.getItem()).canDamage = true;
+					itemstack.damageItem(this.isOwner(itemstack, entity) ? 3 : 9, entity);
+					((Base)itemstack.getItem()).canDamage = false;
+				}
 			}
 		}
 
@@ -129,7 +155,7 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 					if (!ItemStack.areItemStacksEqual(itemstack, stack1) && stack1.getItem() == helmet) {
 						UUID uuid1 = ProcedureUtils.getOwnerId(itemstack);
 						if (uuid1 != null && uuid1.equals(ProcedureUtils.getOwnerId(stack1))) {
-							stack1.shrink(1);
+							if (ItemOcularGear.eye(stack1)==null && ItemOcularGear.eye(itemstack)==null) stack1.shrink(1);
 						}
 					}
 				}
@@ -202,6 +228,7 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static boolean wearingAny(EntityLivingBase entity) {
+		if (net.narutomod.OcularSystem.enabled(entity)) return net.narutomod.OcularSystem.activeSharingan(entity);
 		return entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD).getItem() instanceof Base;
 	}
 
@@ -209,7 +236,12 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 		return stack.getItem() instanceof Base && ((Base)stack.getItem()).isMangekyo();
 	}
 
+	public static boolean isEternal(ItemStack stack) {
+		return stack.getItem() instanceof Base && ((Base)stack.getItem()).isEternal();
+	}
+
 	public static boolean isWearingMangekyo(EntityLivingBase entity) {
+		if (net.narutomod.OcularSystem.enabled(entity)) return net.narutomod.OcularSystem.activeMangekyo(entity);
 		return isMangekyo(entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD));
 	}
 
@@ -252,6 +284,9 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 		public void onPlayerTick(TickEvent.PlayerTickEvent event) {
 			EntityPlayer entity = event.player;
 			if (event.phase == TickEvent.Phase.END && this.hasTargetLockOnEntity(entity)) {
+				if (!entity.world.isRemote && net.narutomod.OcularSystem.enabled(entity) && !wearingAny(entity)) {
+					this.unlockOnTarget(entity); return;
+				}
 				int remaining = this.targetLockTicksRemaining(entity);
 				EntityLivingBase target = this.getLockedTarget(entity);
 				if (!entity.world.isRemote && (remaining <= 0 || target == null || !target.isEntityAlive() || target.getDistanceSq(entity) > 1024d)) {
@@ -361,6 +396,7 @@ public class ItemSharingan extends ElementsNarutomodMod.ModElement {
 	public enum Type {
 		BASE,
 		AMATERASU,
-		KAMUI;
+		KAMUI,
+		MADARA;
 	}
 }

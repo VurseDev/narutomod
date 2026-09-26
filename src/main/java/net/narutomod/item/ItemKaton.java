@@ -64,6 +64,8 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum HOUSENKA = new ItemJutsu.JutsuEnum(7, "housenka", 'D', 36d, new ItemExtraJutsu.HousenkaJutsu(false)).withCustomBalance();
 	public static final ItemJutsu.JutsuEnum HOUSENKATSUMABENI = new ItemJutsu.JutsuEnum(8, "housenka_tsumabeni", 'C', 45d, new ItemExtraJutsu.HousenkaJutsu(true)).withCustomBalance();
 	public static final ItemJutsu.JutsuEnum FLAMEWHIRLWIND = new ItemJutsu.JutsuEnum(9, "flame_whirlwind", 'B', 90d, new ItemCanonicalJutsu.FlameWhirlwind()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum TWINFLAMEDRAGONS = new ItemJutsu.JutsuEnum(10, "twin_flame_dragons", 'A', 140d, new BloodlineTechniques.TwinFlameDragons()).withCustomBalance();
+	public static final ItemJutsu.JutsuEnum FLAMECOMPANY = new ItemJutsu.JutsuEnum(11, "flame_company", 'B', 110d, new BloodlineTechniques.FlameCompanyJutsu()).withCustomBalance();
 
 	public ItemKaton(ElementsNarutomodMod instance) {
 		super(instance, 366);
@@ -71,7 +73,7 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(GREATFIREBALL, GFANNIHILATION, HIDINGINASH, GREATFLAME, FLAMESLICE, BARRIER, FIREPHOENIX, HOUSENKA, HOUSENKATSUMABENI, FLAMEWHIRLWIND));
+		elements.items.add(() -> new RangedItem(GREATFIREBALL, GFANNIHILATION, HIDINGINASH, GREATFLAME, FLAMESLICE, BARRIER, FIREPHOENIX, HOUSENKA, HOUSENKATSUMABENI, FLAMEWHIRLWIND, TWINFLAMEDRAGONS, FLAMECOMPANY));
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityBigFireball.class)
 				.id(new ResourceLocation("narutomod", "katonfireball"), ENTITYID).name("katonfireball").tracker(64, 1, true).build());
 		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityFirePhoenix.class)
@@ -246,22 +248,124 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 	public static class EntityFirePhoenix extends EntityScalableProjectile.Base implements ItemJutsu.IJutsu {
 		private float damage;
 		private float power;
+		private EntityLivingBase target;
+		private boolean acquired;
+		private java.util.UUID savedCaster;
+		private java.util.UUID savedTarget;
 
 		public EntityFirePhoenix(World worldIn) {
 			super(worldIn);
 			this.setOGSize(1.2F, 0.8F);
 			this.isImmuneToFire = true;
+			this.setNoGravity(true);
 		}
 
 		public EntityFirePhoenix(EntityLivingBase shooter, float powerIn) {
 			super(shooter);
 			this.setOGSize(1.2F, 0.8F);
-			this.power = powerIn;
-			this.damage = 12.0f + powerIn * 8.0f;
-			this.setEntityScale(Math.max(0.8f, powerIn * 0.6f));
+			this.power = net.narutomod.PhoenixFlight.power(powerIn);
+			this.damage = 12.0f + this.power * 8.0f;
+			this.setEntityScale(net.narutomod.PhoenixFlight.scale(this.power));
 			Vec3d vec = shooter.getLookVec();
-			this.setPosition(shooter.posX + vec.x, shooter.posY + shooter.getEyeHeight() - 0.2d + vec.y, shooter.posZ + vec.z);
+			this.setPosition(shooter.posX + vec.x, shooter.posY + shooter.getEyeHeight() - this.height * .5d + vec.y, shooter.posZ + vec.z);
 			this.isImmuneToFire = true;
+		}
+
+		@Override
+		public void shoot(double x, double y, double z, float ignoredSpeed, float inaccuracy) {
+			// Base's no-gravity speed is a per-tick multiplier, NOT blocks/tick.
+			// Keep its swept collision/movement, but own a bounded acceleration curve.
+			this.haltMotion();
+			this.setMotionFactor(1f);
+			Vec3d velocity = net.narutomod.PhoenixFlight.velocity(new Vec3d(x, y, z), null, 0);
+			this.motionX = velocity.x; this.motionY = velocity.y; this.motionZ = velocity.z;
+		}
+
+		private Vec3d center() { return this.getPositionVector().addVector(0, this.height * .5, 0); }
+		private Vec3d center(Entity entity) { return entity.getPositionVector().addVector(0, entity.height * .5, 0); }
+		private Vec3d targetPoint(Entity entity) {
+			// A charged bird is taller than a player: aiming at their waist would plough into flat ground.
+			return entity.getPositionVector().addVector(0, Math.max(entity.height * .5, this.height * .5 + .12), 0);
+		}
+
+		protected boolean canHit(Entity entity) {
+			if (entity == this.shootingEntity || !ItemJutsu.canTarget(entity) || entity.noClip) return false;
+			if (entity instanceof net.minecraft.entity.player.EntityPlayer) {
+				net.minecraft.entity.player.EntityPlayer player = (net.minecraft.entity.player.EntityPlayer)entity;
+				if (player.isCreative() || (this.shootingEntity instanceof net.minecraft.entity.player.EntityPlayer
+				    && !((net.minecraft.entity.player.EntityPlayer)this.shootingEntity).canAttackPlayer(player))) return false;
+			}
+			return this.shootingEntity == null || (!this.shootingEntity.isOnSameTeam(entity)
+			    && !net.narutomod.SusanooCombat.isOwnSusanoo(entity, this.shootingEntity)
+			    && !(entity instanceof EntityScalableProjectile.Base && ((EntityScalableProjectile.Base)entity).shootingEntity == this.shootingEntity)
+			    && !(entity instanceof net.narutomod.entity.EntitySummonAnimal.ISummon
+			        && ((net.narutomod.entity.EntitySummonAnimal.ISummon)entity).getSummoner() == this.shootingEntity));
+		}
+
+		protected void updateFlight() {
+			if (this.target != null && (!canHit(this.target) || this.target.world != this.world
+			    || this.getDistanceSq(this.target) > net.narutomod.PhoenixFlight.LEASH * net.narutomod.PhoenixFlight.LEASH)) {
+				// Substitution/untargetability breaks this cast's lock permanently; never re-lock its victim.
+				this.target = null;
+			}
+			if (!this.acquired && this.ticksAlive % 2 == 0) {
+				double nearest = Double.MAX_VALUE;
+				Vec3d forward = new Vec3d(this.motionX, this.motionY, this.motionZ);
+				for (EntityLivingBase candidate : this.world.getEntitiesWithinAABB(EntityLivingBase.class,
+				    this.getEntityBoundingBox().grow(net.narutomod.PhoenixFlight.LOCK_RANGE))) {
+					Vec3d offset = targetPoint(candidate).subtract(center());
+					if (canHit(candidate) && net.narutomod.PhoenixFlight.inAcquisitionCone(forward, offset)
+					    && this.world.rayTraceBlocks(center(), targetPoint(candidate), true, false, false) == null
+					    && offset.lengthSquared() < nearest) {
+						this.target = candidate; nearest = offset.lengthSquared();
+					}
+				}
+				if (this.target != null) this.acquired = true;
+			}
+			Vec3d velocity = net.narutomod.PhoenixFlight.velocity(new Vec3d(this.motionX, this.motionY, this.motionZ),
+			    this.target == null ? null : targetPoint(this.target).subtract(center()), this.ticksAlive);
+			this.motionX = velocity.x; this.motionY = velocity.y; this.motionZ = velocity.z;
+		}
+
+		@Override
+		protected RayTraceResult forwardsRaycast(boolean includeEntities, boolean ignored, Entity excluded) {
+			Vec3d start = center(), end = start.addVector(this.motionX, this.motionY, this.motionZ);
+			net.minecraft.util.math.AxisAlignedBB swept = this.getEntityBoundingBox().expand(this.motionX, this.motionY, this.motionZ).grow(.001);
+			RayTraceResult closest = null;
+			double distance = Double.MAX_VALUE;
+			for (net.minecraft.util.math.BlockPos pos : net.minecraft.util.math.BlockPos.getAllInBoxMutable(
+			    new net.minecraft.util.math.BlockPos(swept.minX, swept.minY, swept.minZ),
+			    new net.minecraft.util.math.BlockPos(swept.maxX, swept.maxY, swept.maxZ))) {
+				if (this.world.getBlockState(pos).getMaterial() != net.minecraft.block.material.Material.WATER) continue;
+				Vec3d hit = net.narutomod.PhoenixFlight.contact(new net.minecraft.util.math.AxisAlignedBB(pos), start, end, this.width, this.height);
+				if (hit != null && start.squareDistanceTo(hit) < distance) {
+					closest = new RayTraceResult(hit, net.minecraft.util.EnumFacing.UP, pos.toImmutable());
+					distance = start.squareDistanceTo(hit);
+				}
+			}
+			for (net.minecraft.util.math.AxisAlignedBB box : this.world.getCollisionBoxes(null, swept)) {
+				Vec3d hit = net.narutomod.PhoenixFlight.contact(box, start, end, this.width, this.height);
+				if (hit != null && start.squareDistanceTo(hit) < distance) {
+					closest = new RayTraceResult(hit, net.minecraft.util.EnumFacing.UP, new net.minecraft.util.math.BlockPos(box.minX, box.minY, box.minZ));
+					distance = start.squareDistanceTo(hit);
+				}
+			}
+			if (includeEntities) for (Entity entity : this.world.getEntitiesWithinAABBExcludingEntity(this, swept.grow(1))) {
+				if (!entity.canBeCollidedWith() || !canHit(entity)) continue;
+				Vec3d hit = net.narutomod.PhoenixFlight.contact(entity.getEntityBoundingBox(), start, end, this.width, this.height);
+				if (hit != null && start.squareDistanceTo(hit) < distance) {
+					closest = new RayTraceResult(entity, hit); distance = start.squareDistanceTo(hit);
+				}
+			}
+			return closest;
+		}
+
+		protected void quenchPhoenix() {
+			this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.BLOCK_FIRE_EXTINGUISH,
+			    net.minecraft.util.SoundCategory.PLAYERS, 1f, .85f);
+			if (this.world instanceof net.minecraft.world.WorldServer) ((net.minecraft.world.WorldServer)this.world).spawnParticle(
+			    net.minecraft.util.EnumParticleTypes.CLOUD, this.posX, this.posY + this.height * .5, this.posZ, 18, .45, .4, .45, .04);
+			this.setDead();
 		}
 
 		@Override
@@ -275,17 +379,31 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 
 		@Override
 		public void onUpdate() {
-			super.onUpdate();
-			if (!this.world.isRemote && (this.ticksInAir > 120 || this.isInWater())) {
-				this.setDead();
-				return;
+			if (!this.world.isRemote) {
+				if (this.savedCaster != null && this.world instanceof net.minecraft.world.WorldServer) {
+					Entity restored = ((net.minecraft.world.WorldServer)this.world).getEntityFromUuid(this.savedCaster);
+					this.shootingEntity = restored instanceof EntityLivingBase ? (EntityLivingBase)restored : null;
+					this.savedCaster = null;
+				}
+				if (this.savedTarget != null && this.world instanceof net.minecraft.world.WorldServer) {
+					Entity restored = ((net.minecraft.world.WorldServer)this.world).getEntityFromUuid(this.savedTarget);
+					this.target = restored instanceof EntityLivingBase ? (EntityLivingBase)restored : null;
+					this.savedTarget = null;
+				}
+				if (this.ticksAlive >= net.narutomod.PhoenixFlight.LIFETIME || this.shootingEntity == null || !this.shootingEntity.isEntityAlive()) {
+					this.setDead(); return;
+				}
+				if (this.isInWater()) { this.quenchPhoenix(); return; }
+				this.updateFlight();
 			}
+			super.onUpdate();
+			if (this.isDead) return;
 			double horizontal = MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
 			if (horizontal > 0.001d || Math.abs(this.motionY) > 0.001d) {
 				this.rotationYaw = (float)(MathHelper.atan2(this.motionX, this.motionZ) * (180D / Math.PI));
 				this.rotationPitch = (float)(MathHelper.atan2(this.motionY, horizontal) * (180D / Math.PI));
 			}
-			if (this.ticksExisted % 6 == 0) {
+			if (!this.world.isRemote && this.ticksExisted % 8 == 0) {
 				this.playSound(SoundEvent.REGISTRY.getObject(new ResourceLocation("narutomod:flamethrow")), 0.8F, 1.2F);
 			}
 			Particles.spawnParticle(this.world, Particles.Types.FLAME, this.posX, this.posY + this.height * 0.5d, this.posZ,
@@ -294,31 +412,67 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 
 		@Override
 		protected void onImpact(RayTraceResult result) {
-			if (!this.world.isRemote) {
-				if (result.entityHit != null && result.entityHit.equals(this.shootingEntity)) {
-					return;
+			if (!this.world.isRemote && !this.isDead) {
+				if (result.entityHit != null && !canHit(result.entityHit)) return;
+				this.setPosition(result.hitVec.x, result.hitVec.y - this.height * .5, result.hitVec.z);
+				if (result.typeOfHit == RayTraceResult.Type.BLOCK && this.world.getBlockState(result.getBlockPos()).getMaterial()
+				    == net.minecraft.block.material.Material.WATER) { this.quenchPhoenix(); return; }
+				Vec3d origin = center();
+				double radius = Math.max(1.5d, this.power);
+				for (EntityLivingBase victim : this.world.getEntitiesWithinAABB(EntityLivingBase.class,
+				    new net.minecraft.util.math.AxisAlignedBB(origin, origin).grow(radius))) {
+					if (!canHit(victim) || center(victim).squareDistanceTo(origin) > radius * radius
+					    || this.world.rayTraceBlocks(origin, center(victim), true, false, false) != null) continue;
+					// One damage event: replacement must not be followed by a second explosion hit or burn.
+					if (victim.attackEntityFrom(ItemJutsu.causeJutsuDamage(this, this.shootingEntity).setFireDamage(), this.damage)
+					    && ItemJutsu.canTarget(victim)) victim.setFire(10);
 				}
-				ProcedureAoeCommand.set(this, 0d, Math.max(1.5d, this.power)).exclude(this.shootingEntity)
-				 .damageEntities(ItemJutsu.causeJutsuDamage(this, this.shootingEntity).setFireDamage(), this.damage).setFire(10);
-				this.world.newExplosion(this.shootingEntity, this.posX, this.posY, this.posZ, Math.max(0.5f, this.power * 0.35f),
-				 ForgeEventFactory.getMobGriefingEvent(this.world, this.shootingEntity), false);
-				CustomJutsuEffects.impact(this.world, this.getPositionVector(), 0xB8FF5A00,
-				 Math.max(2.4f, this.power * 1.25f), 12, 2.8f);
+				this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE,
+				    net.minecraft.util.SoundCategory.PLAYERS, 1f, .9f);
+				this.impactEffects();
 				this.setDead();
 			}
+		}
+
+		protected void impactEffects() {
+			CustomJutsuEffects.impact(this.world, center(), 0xB8FF5A00, Math.max(2.4f, this.power * 1.25f), 12, 2.8f);
+		}
+
+		@Override
+		protected void writeEntityToNBT(net.minecraft.nbt.NBTTagCompound nbt) {
+			super.writeEntityToNBT(nbt);
+			nbt.setFloat("PhoenixPower", this.power);
+			nbt.setBoolean("PhoenixAcquired", this.acquired);
+			if (this.shootingEntity != null) nbt.setUniqueId("PhoenixCaster", this.shootingEntity.getUniqueID());
+			else if (this.savedCaster != null) nbt.setUniqueId("PhoenixCaster", this.savedCaster);
+			if (this.target != null) nbt.setUniqueId("PhoenixTarget", this.target.getUniqueID());
+			else if (this.savedTarget != null) nbt.setUniqueId("PhoenixTarget", this.savedTarget);
+		}
+
+		@Override
+		protected void readEntityFromNBT(net.minecraft.nbt.NBTTagCompound nbt) {
+			super.readEntityFromNBT(nbt);
+			this.power = net.narutomod.PhoenixFlight.power(nbt.getFloat("PhoenixPower"));
+			this.damage = 12f + this.power * 8f;
+			this.setEntityScale(net.narutomod.PhoenixFlight.scale(this.power));
+			this.acquired = nbt.getBoolean("PhoenixAcquired");
+			this.savedCaster = nbt.hasUniqueId("PhoenixCaster") ? nbt.getUniqueId("PhoenixCaster") : null;
+			this.savedTarget = nbt.hasUniqueId("PhoenixTarget") ? nbt.getUniqueId("PhoenixTarget") : null;
+			Vec3d direction = new Vec3d(this.motionX, this.motionY, this.motionZ);
+			this.shoot(direction.x, direction.y, direction.z, 1f, 0f);
+			this.setNoGravity(true);
 		}
 
 		public static class Jutsu implements ItemJutsu.IJutsuCallback {
 			@Override
 			public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
-				if (power < 0.5f) {
+				if (entity.world.isRemote || !Float.isFinite(power) || power < 0.5f) {
 					return false;
 				}
 				EntityFirePhoenix phoenix = new EntityFirePhoenix(entity, power);
 				Vec3d vec = entity.getLookVec();
-				phoenix.shoot(vec.x, vec.y, vec.z, 1.15f, 0.0f);
-				entity.world.spawnEntity(phoenix);
-				return true;
+				phoenix.shoot(vec.x, vec.y, vec.z, 1f, 0.0f);
+				return entity.world.spawnEntity(phoenix);
 			}
 
 			@Override
@@ -363,11 +517,11 @@ public class ItemKaton extends ElementsNarutomodMod.ModElement {
 			@Override
 			public void doRender(EntityFirePhoenix entity, double x, double y, double z, float entityYaw, float partialTicks) {
 				GlStateManager.pushMatrix();
-				GlStateManager.translate(x, y + 0.35d, z);
+				GlStateManager.translate(x, y + entity.height * .5d, z);
 				float scale = entity.getEntityScale();
 				GlStateManager.rotate(180.0F - entity.rotationYaw, 0.0F, 1.0F, 0.0F);
 				GlStateManager.rotate(entity.rotationPitch, 1.0F, 0.0F, 0.0F);
-				GlStateManager.scale(scale * 0.24F, scale * 0.24F, scale * 0.24F);
+				GlStateManager.scale(scale * 0.45F, scale * 0.45F, scale * 0.45F);
 				this.bindEntityTexture(entity);
 				GlStateManager.enableBlend();
 				GlStateManager.disableLighting();

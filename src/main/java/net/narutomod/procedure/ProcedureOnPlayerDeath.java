@@ -15,6 +15,8 @@ import net.narutomod.item.ItemNinjutsu;
 import net.narutomod.item.ItemMokuton;
 import net.narutomod.item.ItemMangekyoSharinganObito;
 import net.narutomod.item.ItemMangekyoSharinganEternal;
+import net.narutomod.item.ItemMangekyoSharinganMadara;
+import net.narutomod.item.ItemMangekyoSharinganMadaraEternal;
 import net.narutomod.item.ItemMangekyoSharingan;
 import net.narutomod.item.ItemKaton;
 import net.narutomod.item.ItemJiton;
@@ -117,6 +119,10 @@ public class ProcedureOnPlayerDeath extends ElementsNarutomodMod.ModElement {
 					((EntityPlayer) entity).inventory.clearMatchingItems(new ItemStack(ItemMangekyoSharinganEternal.helmet, (int) (1)).getItem(), -1,
 							(int) 1, null);
 			}
+			// Match the established EMS loss rule instead of letting this variant bypass it.
+			if (!keepInventory) {
+				((EntityPlayer)entity).inventory.clearMatchingItems(ItemMangekyoSharinganMadaraEternal.helmet, -1, 1, null);
+			}
 			if (((entity instanceof EntityPlayer)
 					? ((EntityPlayer) entity).inventory.hasItemStack(new ItemStack(ItemByakugan.helmet, (int) (1)))
 					: false)) {
@@ -191,6 +197,8 @@ public class ProcedureOnPlayerDeath extends ElementsNarutomodMod.ModElement {
 					EntityBijuManager.toggleBijuCloak((EntityPlayer) entity);
 				}
 				if (entity.world.getGameRules().getBoolean(PlayerTracker.FORCE_DOJUTSU_DROP_RULE)) {
+					dropMadaraEye((EntityPlayer)entity, ItemMangekyoSharinganMadara.helmet);
+					dropMadaraEye((EntityPlayer)entity, ItemMangekyoSharinganMadaraEternal.helmet);
 					stack = ProcedureUtils.getMatchingItemStack((EntityPlayer) entity, ItemByakugan.helmet);
 					if (stack != null) {
 						((EntityPlayer) entity).dropItem(stack.copy(), true, true);
@@ -231,6 +239,21 @@ public class ProcedureOnPlayerDeath extends ElementsNarutomodMod.ModElement {
 			entity.getEntityData().setBoolean("susanoo_activated", (false));
 			entity.getEntityData().setInteger("ForceExtinguish", 5);
 			entity.setNoGravity(false);
+		}
+	}
+
+	/** Forced RP eye drops retain ownership while replacing the lost advancement with baseline eyes. */
+	private static void dropMadaraEye(EntityPlayer player, net.minecraft.item.Item item) {
+		ItemStack source = ProcedureUtils.getMatchingItemStack(player, item);
+		if (source != null && !source.isEmpty()) {
+			ItemStack dropped = source.copy();
+			dropped.setCount(1);
+			if (player.dropItem(dropped, true, true) != null) {
+				ItemStack baseline = new ItemStack(ItemSharingan.helmet);
+				((ItemSharingan.Base)baseline.getItem()).copyOwner(baseline, source);
+				source.shrink(1);
+				ItemHandlerHelper.giveItemToPlayer(player, baseline);
+			}
 		}
 	}
 

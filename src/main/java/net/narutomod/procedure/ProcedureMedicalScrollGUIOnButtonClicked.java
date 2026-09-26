@@ -3,6 +3,7 @@ package net.narutomod.procedure;
 import net.narutomod.item.ItemTenseigan;
 import net.narutomod.item.ItemSharingan;
 import net.narutomod.item.ItemMangekyoSharinganEternal;
+import net.narutomod.item.ItemMangekyoSharinganMadaraEternal;
 import net.narutomod.item.ItemByakugan;
 import net.narutomod.NarutomodModVariables;
 import net.narutomod.ElementsNarutomodMod;
@@ -45,6 +46,14 @@ public class ProcedureMedicalScrollGUIOnButtonClicked extends ElementsNarutomodM
 		}
 		Entity entity = (Entity) dependencies.get("entity");
 		World world = (World) dependencies.get("world");
+		// Never consume a donor or overwrite a prior transplant waiting in the output slot.
+		if (entity instanceof EntityPlayerMP && ((EntityPlayerMP)entity).openContainer instanceof Supplier) {
+			Object inventory = ((Supplier)((EntityPlayerMP)entity).openContainer).get();
+			if (inventory instanceof Map) {
+				Object output = ((Map)inventory).get(2);
+				if (output instanceof Slot && ((Slot)output).getHasStack()) return;
+			}
+		}
 		ItemStack stack0 = ItemStack.EMPTY;
 		ItemStack stack1 = ItemStack.EMPTY;
 		ItemStack newstack = ItemStack.EMPTY;
@@ -98,8 +107,14 @@ public class ProcedureMedicalScrollGUIOnButtonClicked extends ElementsNarutomodM
 											.getAdvancement(new ResourceLocation("narutomod:mangekyosharinganopened")))
 									.isDone()
 							: false)) {
-						newstack = new ItemStack(ItemMangekyoSharinganEternal.helmet, (int) (1));
+						// Slot 0 is the recipient. The donor grants permanence, not their ability family.
+						boolean madaraRecipient = ((ItemSharingan.Base)stack0.getItem()).getSubType() == ItemSharingan.Type.MADARA;
+						newstack = new ItemStack(madaraRecipient ? ItemMangekyoSharinganMadaraEternal.helmet : ItemMangekyoSharinganEternal.helmet);
 						((ItemSharingan.Base) newstack.getItem()).copyOwner(newstack, stack0);
+						if (madaraRecipient) {
+							newstack.clearCustomName();
+							newstack.setStackDisplayName(owner.getName() + "'s " + newstack.getDisplayName());
+						}
 						if (entity instanceof EntityPlayerMP) {
 							Container _current = ((EntityPlayerMP) entity).openContainer;
 							if (_current instanceof Supplier) {

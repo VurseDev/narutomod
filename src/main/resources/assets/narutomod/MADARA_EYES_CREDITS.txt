@@ -1,0 +1,21 @@
+Madara eye pattern attribution
+
+The Madara MS and EMS iris patterns are adapted from the following SVG illustrations
+by ShounenSuki (with SVG cleanup by Ju gatsu mikka):
+
+https://commons.wikimedia.org/wiki/File:Mangekyou_Sharingan_Madara.svg
+https://commons.wikimedia.org/wiki/File:Mangekyou_Sharingan_Madara_(Eternal).svg
+
+License selected: Creative Commons Attribution-ShareAlike 3.0 Unported.
+https://creativecommons.org/licenses/by-sa/3.0/
+
+Changes: normalized editable SVG, brighter red palette to match the mod's existing
+Sharingan assets, rasterization at inventory and worn-iris resolutions, and placement
+on the mod's existing worn-eye atlas. These adapted iris illustrations remain under
+CC BY-SA 3.0. This notice does not change the license of unrelated mod code or assets.
+
+Editable sources: models/madara/eyes/madara_ms.svg and madara_ems.svg.
+Generated textures: textures/mangekyosharinganhelmet_madara.png,
+textures/mangekyosharinganhelmet_madara_eternal.png,
+textures/blocks/mangekyosharingan_madara.png,
+textures/blocks/mangekyosharingan_madara_eternal.png.

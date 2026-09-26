@@ -42,6 +42,28 @@ public class GuiScrollExtraJutsu extends ElementsNarutomodMod.ModElement {
 				return;
 			}
 			ItemExtraJutsuScrolls.ScrollDef def = ItemExtraJutsuScrolls.SCROLLS[this.scrollIndex];
+			if (def.kind == ItemExtraJutsuScrolls.Kind.EXPLOSIVE) {
+				if (player.world.isRemote || buttonID != 0 || player.openContainer != this) return;
+				net.minecraft.item.Item scroll = net.minecraftforge.fml.common.registry.ForgeRegistries.ITEMS.getValue(new ResourceLocation("narutomod", def.registryName));
+				ItemStack held = player.getHeldItemMainhand().getItem() == scroll ? player.getHeldItemMainhand() : player.getHeldItemOffhand();
+				if (held.isEmpty() || held.getItem() != scroll) return;
+				net.narutomod.item.ItemExplosiveArt.ArtItem art = (net.narutomod.item.ItemExplosiveArt.ArtItem)net.narutomod.item.ItemExplosiveArt.block;
+				ItemStack existing = net.narutomod.procedure.ProcedureUtils.getMatchingItemStack(player, art);
+				if (existing != null && (!art.isOwner(existing, player) || art.isJutsuEnabled(existing, def.jutsu))) return;
+				if (existing == null && !net.narutomod.PlayerTracker.isNinja(player)) return;
+				if (existing == null) {
+					// Initialize before inventory insertion: the helper may insert a copy of this stack.
+					ItemStack learned = new ItemStack(art);
+					art.setOwner(learned, player);
+					art.enableJutsu(learned, def.jutsu, true);
+					art.setCurrentJutsu(learned, def.jutsu);
+					net.minecraftforge.items.ItemHandlerHelper.giveItemToPlayer(player, learned);
+				} else art.enableJutsu(existing, def.jutsu, true);
+				held.shrink(1);
+				net.narutomod.procedure.ProcedureUtils.grantAdvancement((net.minecraft.entity.player.EntityPlayerMP)player, "narutomod:learned_1st_jutsu", true);
+				player.inventory.markDirty();
+				return;
+			}
 			ItemStack stack = null;
 			if (def.kind == ItemExtraJutsuScrolls.Kind.NINJUTSU) {
 				stack = GuiNinjaScroll.enableJutsu(player, (ItemNinjutsu.RangedItem)ItemNinjutsu.block, def.jutsu, true);

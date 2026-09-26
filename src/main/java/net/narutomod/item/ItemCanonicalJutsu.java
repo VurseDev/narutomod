@@ -96,7 +96,9 @@ public final class ItemCanonicalJutsu {
 
 	private static void vanilla(World world, EnumParticleTypes type, Vec3d p, int count, double spread, double speed) {
 		if (world instanceof WorldServer) {
-			((WorldServer)world).spawnParticle(type, p.x, p.y, p.z, count, spread, spread, spread, speed);
+			int[] args = new int[type.getArgumentCount()];
+			if(args.length>0)args[0]=net.minecraft.block.Block.getStateId(net.minecraft.init.Blocks.DIRT.getDefaultState());
+			((WorldServer)world).spawnParticle(type, p.x, p.y, p.z, count, spread, spread, spread, speed, args);
 		}
 	}
 
@@ -128,7 +130,9 @@ public final class ItemCanonicalJutsu {
 			Vec3d last = caster.getPositionEyes(1f);
 			EntityLivingBase current = first;
 			for (int jump = 0; jump < 4 && current != null; jump++) {
-				line(caster, last, current.getPositionEyes(1f), 0xB070D8FF, 10);
+				net.narutomod.JutsuVisualEffects.bolt(caster.world,last,current.getPositionEyes(1f),.06f,12,0x70D8FF);
+				net.narutomod.JutsuVisualEffects.burst(caster.world,current.getPositionEyes(1f),.65f,0xA8ECFF);
+				net.narutomod.JutsuEffectSounds.chainSnap(caster.world,current.getPositionVector());
 				current.hurtResistantTime = 0;
 				current.attackEntityFrom(source(caster), (5.0f + power * 1.8f) * (1f - jump * 0.16f));
 				current.addPotionEffect(new PotionEffect(PotionParalysis.potion, 16 + (int)(power * 5f), 0, false, false));
@@ -140,7 +144,7 @@ public final class ItemCanonicalJutsu {
 				current = next;
 				if (current != null) struck.add(current);
 			}
-			sound(caster, SoundEvents.ENTITY_LIGHTNING_THUNDER, 0.55f, 1.75f);
+			net.narutomod.JutsuEffectSounds.discharge(caster.world,caster.getPositionVector());
 			vanilla(caster.world, EnumParticleTypes.CRIT_MAGIC, first.getPositionEyes(1f), 35, 0.55d, 0.18d);
 			cooldown(stack, 260);
 			return true;
@@ -150,23 +154,39 @@ public final class ItemCanonicalJutsu {
 	/** Four lightning columns converge on the aimed target and bind movement. */
 	public static class FourPillarBind extends Charged {
 		public FourPillarBind() { super(2.0f, 32f); }
+		@Override public void onUsingTick(ItemStack stack, EntityLivingBase caster, float power) {
+			net.narutomod.JutsuVisualEffects.charging(stack, caster, power);
+			if (caster instanceof EntityPlayer && caster.ticksExisted % 2 == 0)
+				((EntityPlayer)caster).sendStatusMessage(new net.minecraft.util.text.TextComponentTranslation(
+				    "message.narutomod.four_pillar_charge", net.narutomod.FourPillarPolicy.percent(power)), true);
+		}
 		@Override public boolean createJutsu(ItemStack stack, EntityLivingBase caster, float power) {
 			if (caster.world.isRemote) return false;
 			EntityLivingBase victim = target(caster, 24d, 2.5d);
-			if (victim == null) return false;
-			Vec3d center = victim.getPositionVector();
+			if (!hostile(caster, victim) || !Float.isFinite(power)) return false;
+			if (victim instanceof EntityPlayer && (((EntityPlayer)victim).isCreative()
+			    || caster instanceof EntityPlayer && !((EntityPlayer)caster).canAttackPlayer((EntityPlayer)victim))) return false;
+			AxisAlignedBB bounds = victim.getEntityBoundingBox();
+			Vec3d center = new Vec3d((bounds.minX+bounds.maxX)*.5,bounds.minY,(bounds.minZ+bounds.maxZ)*.5);
+			int bindTicks = net.narutomod.FourPillarPolicy.duration(power);
+			float damage = net.narutomod.FourPillarPolicy.damage(caster instanceof EntityPlayer
+			    ? net.narutomod.PlayerTracker.getBattleXp((EntityPlayer)caster) : 0,
+			    ItemJutsu.getJutsuMastery(stack, ItemRaiton.FOURPILLARBIND, caster), power);
+			// Resolve dodge/replacement/barrier events BEFORE applying a restraint.
+			boolean landed = victim.attackEntityFrom(source(caster), damage);
+			cooldown(stack, 520);
+			if (!landed || !ItemJutsu.canTarget(victim)) return true;
+			net.narutomod.JutsuVisualEffects.lightningBind(victim, bindTicks);
+			double radius = net.narutomod.FourPillarPolicy.radius(Math.max(bounds.maxX-bounds.minX,bounds.maxZ-bounds.minZ));
 			for (int i = 0; i < 4; i++) {
 				double a = Math.PI * 0.5d * i;
-				Vec3d base = center.addVector(Math.cos(a) * 2d, 0d, Math.sin(a) * 2d);
-				line(caster, base, base.addVector(0d, 4.5d, 0d), 0xC080E8FF, 13);
-				line(caster, base.addVector(0d, 2.5d, 0d), center.addVector(0d, 1d, 0d), 0xD0B8F4FF, 8);
+				Vec3d base = center.addVector(Math.cos(a) * radius, 0d, Math.sin(a) * radius);
+				vanilla(caster.world, EnumParticleTypes.BLOCK_DUST, base.addVector(0,.15,0), 10, .4, .08);
 			}
-			victim.attackEntityFrom(source(caster), 7f + power * 2f);
-			victim.addPotionEffect(new PotionEffect(PotionParalysis.potion, 70 + (int)(power * 20f), 1, false, false));
+			victim.addPotionEffect(new PotionEffect(PotionParalysis.potion, bindTicks, 1, false, false));
 			victim.addPotionEffect(new PotionEffect(MobEffects.MINING_FATIGUE, 80, 3, false, false));
-			sound(caster, SoundEvents.ENTITY_LIGHTNING_THUNDER, 0.8f, 1.25f);
+			net.narutomod.JutsuEffectSounds.pillarSequence(caster.world, center, bindTicks);
 			shake(caster.world, center, 20d, 9, 1.2f);
-			cooldown(stack, 520);
 			return true;
 		}
 	}

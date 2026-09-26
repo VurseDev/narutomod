@@ -228,9 +228,8 @@ public class EntitySusanooClothed extends ElementsNarutomodMod.ModElement {
 		@Override
 		protected void collideWithEntity(Entity entity) {
 			if (!this.world.isRemote && entity instanceof EntityLivingBase && !entity.equals(this.getOwnerPlayer())) {
-				if (this.getOwnerPlayer() != null 
-				 && (this.getOwnerPlayer().getItemStackFromSlot(EntityEquipmentSlot.HEAD).getItem() == ItemMangekyoSharingan.helmet ||
-				     this.getOwnerPlayer().getItemStackFromSlot(EntityEquipmentSlot.HEAD).getItem() == ItemMangekyoSharinganEternal.helmet))
+				if (this.getOwnerPlayer() != null
+				 && net.narutomod.OcularAbilities.hasResolvedAbility(this.getOwnerPlayer(), "amaterasu"))
 					((EntityLivingBase) entity).addPotionEffect(new PotionEffect(PotionAmaterasuFlame.potion, 200, this.hasLegs() ? 2 : 1, false, false));
 			}
 			super.collideWithEntity(entity);
@@ -340,6 +339,9 @@ public class EntitySusanooClothed extends ElementsNarutomodMod.ModElement {
 		@Override
 		protected void onImpact(RayTraceResult result) {
 			if (!this.world.isRemote) {
+				if (result.entityHit instanceof EntitySusanooBase && this.shootingEntity != null
+				 && this.shootingEntity.equals(((EntitySusanooBase)result.entityHit).getOwnerPlayer())
+				 && this.shootingEntity.getRidingEntity() == result.entityHit) return;
 				if (result.entityHit != null && (result.entityHit.equals(this.shootingEntity) || result.entityHit instanceof EntityMagatama)) {
 					return;
 				}

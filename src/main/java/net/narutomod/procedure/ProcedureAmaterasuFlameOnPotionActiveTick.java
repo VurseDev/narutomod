@@ -34,8 +34,7 @@ public class ProcedureAmaterasuFlameOnPotionActiveTick extends ElementsNarutomod
 		double h = 0;
 		double amp = 0;
 		ItemStack stack = ((EntityLivingBase) entity).getItemStackFromSlot(EntityEquipmentSlot.HEAD);
-		if ((stack.getItem() instanceof ItemSharingan.Base && ((((ItemSharingan.Base) stack.getItem()).getSubType() == ItemSharingan.Type.AMATERASU)
-				|| ((ItemSharingan.Base) stack.getItem()).isEternal()))) {
+		if (stack.getItem() instanceof ItemSharingan.Base && ((ItemSharingan.Base)stack.getItem()).canUseAmaterasu()) {
 			((EntityLivingBase) entity).removePotionEffect(PotionAmaterasuFlame.potion);
 			(entity).extinguish();
 		} else {

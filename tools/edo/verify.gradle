@@ -1,0 +1,25 @@
+// gradle -I tools/edo/verify.gradle verifyEdo --no-daemon
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            project.tasks.create(name: 'verifyEdo', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.EdoPrototypeChecks'
+                workingDir project.projectDir
+            }
+            project.tasks.create(name: 'verifyEdoSouls', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.EdoSoulChecks'
+                workingDir project.projectDir
+            }
+            project.tasks.create(name: 'verifyEdoReanimation', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.EdoReanimationChecks'
+                workingDir project.projectDir
+            }
+        }
+    }
+}

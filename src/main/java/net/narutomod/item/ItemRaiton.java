@@ -28,6 +28,7 @@ import net.narutomod.entity.EntityLightningArc;
 import net.narutomod.entity.EntityLightningBeast;
 import net.narutomod.entity.EntityLightningPanther;
 import net.narutomod.entity.EntityChidori;
+import net.narutomod.entity.EntityChidoriRaikiri;
 import net.narutomod.entity.EntityFalseDarkness;
 import net.narutomod.entity.EntityKirin;
 import net.narutomod.procedure.ProcedureUtils;
@@ -55,6 +56,9 @@ public class ItemRaiton extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum CHIDORISENBON = new ItemJutsu.JutsuEnum(7, "chidori_senbon", 'A', 60d, new ItemExtraJutsu.ChidoriSenbonJutsu()).withCustomBalance();
 	public static final ItemJutsu.JutsuEnum WAVEINSPIRATION = new ItemJutsu.JutsuEnum(8, "wave_of_inspiration", 'B', 70d, new ItemCanonicalJutsu.WaveOfInspiration()).withCustomBalance();
 	public static final ItemJutsu.JutsuEnum FOURPILLARBIND = new ItemJutsu.JutsuEnum(9, "four_pillar_bind", 'A', 140d, new ItemCanonicalJutsu.FourPillarBind()).withCustomBalance();
+	/** Nydo-inspired high-commitment Chidori variant: charge, dash, impact burst. */
+	public static final ItemJutsu.JutsuEnum CHIDORI_RAIKIRI = new ItemJutsu.JutsuEnum(10, "chidori_raikiri", 'A', EntityChidoriRaikiri.CHAKRA_USAGE,
+		(stack, entity, power) -> false).withCustomBalance(); // Retired index retained for old saves.
 
 	public ItemRaiton(ElementsNarutomodMod instance) {
 		super(instance, 373);
@@ -63,7 +67,7 @@ public class ItemRaiton extends ElementsNarutomodMod.ModElement {
 	@Override
 	public void initElements() {
 		elements.items.add(() -> new RangedItem(CHIDORI, CHAKRAMODE, CHASINGDOG, GIAN, KIRIN, BLACKPANTHER, LIGHTNINGCLONE, CHIDORISENBON, WAVEINSPIRATION, FOURPILLARBIND));
-		elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityChakraMode.class)
+		 elements.entities.add(() -> EntityEntryBuilder.create().entity(EntityChakraMode.class)
 			.id(new ResourceLocation("narutomod", "raitonchakramode"), ENTITYID).name("raitonchakramode").tracker(64, 1, true).build());
 	}
 

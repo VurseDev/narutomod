@@ -38,7 +38,7 @@ public class ProcedureNarakaPath extends ElementsNarutomodMod.ModElement {
 		}
 		if (!world.isRemote && entity instanceof EntityLivingBase) {
 			EntityLivingBase living = (EntityLivingBase)entity;
-			ItemStack stack = living.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
+			ItemStack stack = net.narutomod.OcularAbilities.resolve(living, "rinnegan");
 			if (stack.getItem() instanceof ItemRinnegan.Base) {
 				UUID entity_id = ProcedureUtils.getUniqueId(stack, "KoH_id");
 				if (entity_id == null) {

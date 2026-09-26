@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="300" height="300" viewBox="0 0 300 300">
+  <!-- Madara EMS pattern by ShounenSuki; cleanup by Ju gatsu mikka.
+       Adapted for the Naruto mod: normalized SVG and brighter legacy-style iris palette.
+       https://commons.wikimedia.org/wiki/File:Mangekyou_Sharingan_Madara_(Eternal).svg
+       CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/ -->
+  <defs>
+    <radialGradient id="iris-red">
+      <stop offset="0" stop-color="#810b10"/>
+      <stop offset="0.5" stop-color="#dc222b"/>
+      <stop offset="1" stop-color="#ac111c"/>
+    </radialGradient>
+  </defs>
+  <circle cx="150" cy="150" r="145" fill="url(#iris-red)" stroke="#09090b" stroke-width="10"/>
+  <g id="tomoe">
+    <circle cx="150" cy="60" r="30" fill="none" stroke="#09090b" stroke-width="15"/>
+    <path fill="#09090b" d="M151.1 24.6L174.1 43.1L180 82.5C240.9 62.8 255 166.9 244.1 161.2C255 183.2 264.5 185 262.9 181.9C260.5 177.2 260.8 175.4 260.8 171C264.9 103.6 227 34 151.1 24.6Z"/>
+    <path fill="#09090b" d="M115 250L115 290L150 295L185 290L185 250Z"/>
+  </g>
+  <use xlink:href="#tomoe" transform="rotate(120 150 150)"/>
+  <use xlink:href="#tomoe" transform="rotate(-120 150 150)"/>
+  <circle cx="150" cy="150" r="28" fill="#09090b"/>
+</svg>

@@ -1,0 +1,13 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            project.tasks.create(name: 'verifyLightningVfx', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.LightningVfxChecks'
+                workingDir project.projectDir
+                systemProperty 'java.awt.headless', 'true'
+            }
+        }
+    }
+}

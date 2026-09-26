@@ -765,6 +765,8 @@ public class ProcedureSync extends ElementsNarutomodMod.ModElement {
 		public static class ServerHandler implements IMessageHandler<EntityNBTTag, IMessage> {
 			@Override
 			public IMessage onMessage(EntityNBTTag message, MessageContext context) {
+				// Physical eye identity and cooldowns are never client-authored, including deletion requests.
+				if (net.narutomod.OcularPolicy.serverOwnedTag(message.tag)) return null;
 				WorldServer world = context.getServerHandler().player.getServerWorld();
 				world.addScheduledTask(() -> {
 					EntityNBTTag.setDataTag(world.getEntityByID(message.id), message);

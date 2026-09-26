@@ -1,0 +1,14 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            ['exportLegacySusanoo':'LegacySusanooExporter', 'verifyMadaraTemporal':'MadaraTemporalChecks', 'verifyMadaraSusanoo':'MadaraSusanooChecks', 'verifyMadaraModels':'MadaraModelChecks'].each { taskName, className ->
+                project.tasks.create(name: taskName, type: JavaExec) {
+                    dependsOn project.tasks.testClasses
+                    classpath = project.sourceSets.test.runtimeClasspath
+                    main = 'net.narutomod.' + className
+                    workingDir project.projectDir
+                }
+            }
+        }
+    }
+}

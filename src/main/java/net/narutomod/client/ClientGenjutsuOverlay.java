@@ -1,393 +1,190 @@
 package net.narutomod.client;
 
-import net.minecraftforge.client.event.EntityViewRenderEvent;
-import net.minecraftforge.client.event.InputUpdateEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
+import java.util.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.init.SoundEvents;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.world.World;
+import net.minecraftforge.client.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.model.ModelPlayer;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-
 import org.lwjgl.opengl.GL11;
 
-/** Client-only presentation for the custom genjutsu. The real player is never moved. */
+/** Anime-inspired private stages; the real player stays in the multiplayer world. */
 @SideOnly(Side.CLIENT)
 public class ClientGenjutsuOverlay {
-	private static int type;
-	private static int ticks;
-	private static int duration;
-	private static int lastTick = Integer.MIN_VALUE;
-	private static int lastStab = Integer.MIN_VALUE;
-
-	private final ModelPlayer victimModel = new ModelPlayer(0.0f, false);
-
-	public static void handleMessage(int typeIn, int ticksIn) {
-		Minecraft.getMinecraft().addScheduledTask(() -> {
-			if (typeIn < 0) clear();
-			else activate(typeIn, ticksIn);
-		});
-	}
-
-	public static void activate(int typeIn, int ticksIn) {
-		boolean replacing = ticks <= 0 || type != typeIn;
-		type = typeIn;
-		if (replacing) {
-			ticks = Math.max(1, ticksIn);
-			duration = ticks;
-		} else {
-			ticks = Math.max(ticks, ticksIn);
-			duration = Math.max(duration, ticks);
-		}
-		lastStab = Integer.MIN_VALUE;
-	}
-
-	public static void clear() {
-		ticks = 0;
-		duration = 0;
-		type = 0;
-		lastStab = Integer.MIN_VALUE;
-	}
-
-	private static int elapsed() {
-		return Math.max(0, duration - ticks);
-	}
-
-	@SubscribeEvent
-	public void onClientTick(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || ticks <= 0) return;
-		Minecraft mc = Minecraft.getMinecraft();
-		if (mc.player == null || mc.world == null) {
-			clear();
-			return;
-		}
-		if (mc.player.ticksExisted != lastTick) {
-			lastTick = mc.player.ticksExisted;
-			if (--ticks <= 0) clear();
-		}
-	}
-
-	@SubscribeEvent
-	public void onInput(InputUpdateEvent event) {
-		if (ticks <= 0) return;
-		if (type == 0) {
-			event.getMovementInput().moveForward = -event.getMovementInput().moveForward;
-			event.getMovementInput().moveStrafe = -event.getMovementInput().moveStrafe;
-		} else if (type == 2) {
-			event.getMovementInput().moveForward *= 0.25f;
-			event.getMovementInput().moveStrafe *= 0.25f;
-		} else if (type == 3) {
-			event.getMovementInput().moveForward = 0f;
-			event.getMovementInput().moveStrafe = 0f;
-			event.getMovementInput().jump = false;
-			event.getMovementInput().sneak = false;
-		}
-	}
-
-	@SubscribeEvent
-	public void onCamera(EntityViewRenderEvent.CameraSetup event) {
-		if (ticks <= 0) return;
-		float time = elapsed() + (float)event.getRenderPartialTicks();
-		if (type == 0) {
-			event.setRoll(MathHelper.sin(time * 0.16f) * 3.5f);
-			event.setYaw(event.getYaw() + MathHelper.sin(time * 0.11f) * 1.8f);
-		} else if (type == 1) {
-			event.setRoll(MathHelper.sin(time * 0.38f) * 1.5f);
-		} else if (type == 2) {
-			event.setRoll(MathHelper.sin(time * 0.52f) * 2.0f);
-		} else if (type == 3) {
-			float stab = stabPulse(time);
-			event.setRoll(MathHelper.sin(time * 0.31f) * 2.4f + stab * MathHelper.sin(time * 2.7f) * 4f);
-		} else {
-			event.setRoll(MathHelper.sin(time * 0.25f) * 2.0f);
-		}
-	}
-
-	@SubscribeEvent
-	public void onFogColor(EntityViewRenderEvent.FogColors event) {
-		if (ticks <= 0) return;
-		if (type == 3) {
-			event.setRed(0.28f);
-			event.setGreen(0.002f);
-			event.setBlue(0.002f);
-		} else if (type == 4) {
-			event.setRed(0.22f);
-			event.setGreen(0.035f);
-			event.setBlue(0.005f);
-		}
-	}
-
-	@SubscribeEvent
-	public void onFogDensity(EntityViewRenderEvent.FogDensity event) {
-		if (ticks > 0 && type == 3) {
-			event.setDensity(0.12f);
-			event.setCanceled(true);
-		}
-	}
-
-	@SubscribeEvent
-	public void onRenderWorld(RenderWorldLastEvent event) {
-		if (ticks <= 0 || type != 3) return;
-		Minecraft mc = Minecraft.getMinecraft();
-		if (mc.player == null || mc.world == null) return;
-
-		float partial = event.getPartialTicks();
-		float time = elapsed() + partial;
-		Vec3d eye = mc.player.getPositionEyes(partial);
-		Vec3d look = mc.player.getLook(partial).normalize();
-		Vec3d scene = eye.add(look.scale(5.2d));
-		double x = scene.x - mc.getRenderManager().viewerPosX;
-		double y = scene.y - mc.getRenderManager().viewerPosY;
-		double z = scene.z - mc.getRenderManager().viewerPosZ;
-
-		GlStateManager.pushMatrix();
-		GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
-		GlStateManager.translate(x, y, z);
-		GlStateManager.rotate(-mc.getRenderManager().playerViewY, 0f, 1f, 0f);
-		GlStateManager.rotate(mc.getRenderManager().playerViewX, 1f, 0f, 0f);
-		GlStateManager.scale(1.12f, 1.12f, 1.12f);
-		GlStateManager.enableDepth();
-		GlStateManager.depthMask(true);
-		GlStateManager.disableCull();
-		GlStateManager.disableLighting();
-		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-		 GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-
-		GlStateManager.disableTexture2D();
-		renderCross();
-		renderBindings();
-		renderBlades(time);
-		GlStateManager.enableTexture2D();
-		renderVictim(mc, time);
-
-		GlStateManager.enableCull();
-		GlStateManager.enableLighting();
-		GlStateManager.disableBlend();
-		GlStateManager.color(1f, 1f, 1f, 1f);
-		GlStateManager.popMatrix();
-
-		int stab = elapsed() / 18;
-		if (stab != lastStab && elapsed() % 18 <= 1) {
-			lastStab = stab;
-			mc.player.playSound(SoundEvents.ENTITY_PLAYER_HURT, 0.42f, 0.55f + mc.player.getRNG().nextFloat() * 0.18f);
-		}
-	}
-
-	private void renderCross() {
-		renderBox(-0.17f, -1.35f, 0.18f, 0.17f, 1.45f, 0.48f, 0.055f, 0.008f, 0.008f, 1f);
-		renderBox(-1.55f, 0.18f, 0.18f, 1.55f, 0.48f, 0.48f, 0.065f, 0.009f, 0.009f, 1f);
-		renderBox(-0.12f, -1.28f, 0.15f, 0.12f, 1.38f, 0.17f, 0.42f, 0.02f, 0.02f, 0.72f);
-	}
-
-	private void renderBindings() {
-		for (int i = -1; i <= 1; i += 2) {
-			float x = i * 0.98f;
-			renderBox(x - 0.17f, 0.20f, -0.10f, x + 0.17f, 0.48f, 0.20f, 0.025f, 0.025f, 0.025f, 1f);
-			renderBox(x - 0.13f, 0.24f, -0.13f, x + 0.13f, 0.44f, -0.10f, 0.55f, 0.03f, 0.03f, 0.85f);
-		}
-	}
-
-	private void renderBlades(float time) {
-		float approach = Math.min(1f, (time % 18f) / 7f);
-		for (int i = 0; i < 6; i++) {
-			boolean left = (i & 1) == 0;
-			float row = i / 2;
-			float x = (left ? -1f : 1f) * (2.15f - approach * (1.30f + row * 0.09f));
-			float y = 0.44f - row * 0.46f;
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(x, y, -0.28f - row * 0.035f);
-			GlStateManager.rotate(left ? -17f - row * 8f : 197f + row * 8f, 0f, 0f, 1f);
-			renderBox(-0.12f, -0.035f, -0.055f, 0.76f, 0.035f, 0.055f, 0.76f, 0.78f, 0.82f, 1f);
-			renderBox(0.76f, -0.085f, -0.075f, 1.02f, 0.085f, 0.075f, 0.045f, 0.015f, 0.015f, 1f);
-			GlStateManager.popMatrix();
-		}
-	}
-
-	private void renderVictim(Minecraft mc, float time) {
-		GlStateManager.pushMatrix();
-		GlStateManager.translate(0f, -1.04f, -0.08f);
-		GlStateManager.rotate(180f, 0f, 1f, 0f);
-		GlStateManager.scale(-0.92f, -0.92f, 0.92f);
-		GlStateManager.translate(0f, -1.501f, 0f);
-		mc.getTextureManager().bindTexture(mc.player.getLocationSkin());
-		float unit = 0.0625f;
-		this.victimModel.isChild = false;
-		this.victimModel.isRiding = false;
-		this.victimModel.isSneak = false;
-		this.victimModel.swingProgress = 0f;
-		this.victimModel.setLivingAnimations(mc.player, 0f, 0f, eventPartial(time));
-		this.victimModel.setRotationAngles(0f, 0f, time, 0f, -8f, unit, mc.player);
-		this.victimModel.bipedRightArm.rotateAngleX = 0f;
-		this.victimModel.bipedLeftArm.rotateAngleX = 0f;
-		this.victimModel.bipedRightArm.rotateAngleY = 0f;
-		this.victimModel.bipedLeftArm.rotateAngleY = 0f;
-		this.victimModel.bipedRightArm.rotateAngleZ = 1.48f;
-		this.victimModel.bipedLeftArm.rotateAngleZ = -1.48f;
-		this.victimModel.bipedHead.rotateAngleX = -0.18f + MathHelper.sin(time * 0.12f) * 0.04f;
-		this.victimModel.bipedHeadwear.rotateAngleX = this.victimModel.bipedHead.rotateAngleX;
-		this.victimModel.bipedHead.render(unit);
-		this.victimModel.bipedHeadwear.render(unit);
-		this.victimModel.bipedBody.render(unit);
-		this.victimModel.bipedBodyWear.render(unit);
-		this.victimModel.bipedRightArm.render(unit);
-		this.victimModel.bipedLeftArm.render(unit);
-		this.victimModel.bipedRightArmwear.rotateAngleZ = this.victimModel.bipedRightArm.rotateAngleZ;
-		this.victimModel.bipedLeftArmwear.rotateAngleZ = this.victimModel.bipedLeftArm.rotateAngleZ;
-		this.victimModel.bipedRightArmwear.render(unit);
-		this.victimModel.bipedLeftArmwear.render(unit);
-		this.victimModel.bipedRightLeg.render(unit);
-		this.victimModel.bipedLeftLeg.render(unit);
-		this.victimModel.bipedRightLegwear.render(unit);
-		this.victimModel.bipedLeftLegwear.render(unit);
-		GlStateManager.popMatrix();
-	}
-
-	private float eventPartial(float time) {
-		return time - (int)time;
-	}
-
-	@SubscribeEvent
-	public void onOverlay(RenderGameOverlayEvent.Post event) {
-		Minecraft mc = Minecraft.getMinecraft();
-		if (ticks <= 0 || mc.player == null || event.getType() != RenderGameOverlayEvent.ElementType.ALL) return;
-		int width = event.getResolution().getScaledWidth();
-		int height = event.getResolution().getScaledHeight();
-		float time = elapsed() + event.getPartialTicks();
-
-		if (type == 0) renderFalseOpening(width, height, time);
-		else if (type == 1) renderMemoryFracture(width, height, time);
-		else if (type == 2) renderMurderIntent(width, height, time);
-		else if (type == 3) renderExecution(width, height, time);
-		else renderBurningCoffin(width, height, time);
-	}
-
-	private void renderFalseOpening(int width, int height, float time) {
-		int offset = (int)(MathHelper.sin(time * 0.45f) * 9f);
-		Gui.drawRect(0, 0, width, height, 0x26002055);
-		Gui.drawRect(0, 0, Math.max(0, width / 5 + offset), height, 0x28500080);
-		Gui.drawRect(Math.min(width, width * 4 / 5 + offset), 0, width, height, 0x28005080);
-		for (int y = Math.floorMod((int)time * 5, 32); y < height; y += 32) Gui.drawRect(0, y, width, y + 1, 0x355A20A0);
-	}
-
-	private void renderMemoryFracture(int width, int height, float time) {
-		int pulse = 34 + (int)(Math.abs(MathHelper.sin(time * 0.22f)) * 45f);
-		Gui.drawRect(0, 0, width, height, (pulse << 24) | 0x310044);
-		int slice = Math.floorMod((int)time * 13, Math.max(1, height));
-		Gui.drawRect(0, slice, width, Math.min(height, slice + 7), 0x705E267B);
-		for (int i = 0; i < 5; i++) {
-			int inset = i * Math.min(width, height) / 16;
-			int alpha = Math.max(8, 42 - i * 7);
-			Gui.drawRect(inset, inset, width - inset, inset + 2, (alpha << 24) | 0xB060D0);
-			Gui.drawRect(inset, height - inset - 2, width - inset, height - inset, (alpha << 24) | 0xB060D0);
-		}
-	}
-
-	private void renderMurderIntent(int width, int height, float time) {
-		Gui.drawRect(0, 0, width, height, 0x520F0000);
-		drawVignette(width, height, 0xB8000000);
-		float blink = Math.abs(MathHelper.sin(time * 0.17f));
-		int eyeHeight = Math.max(2, (int)(height * 0.075f * blink));
-		Gui.drawRect(width / 4, height / 2 - eyeHeight, width * 3 / 4, height / 2 + eyeHeight, 0xA0900000);
-		Gui.drawRect(width / 2 - 2, height / 2 - eyeHeight, width / 2 + 2, height / 2 + eyeHeight, 0xE8000000);
-	}
-
-	private void renderExecution(int width, int height, float time) {
-		float stab = stabPulse(time);
-		if ((int)time % 36 == 0 || ((int)time + 1) % 36 == 0) drawInverse(width, height);
-		Gui.drawRect(0, 0, width, height, 0x8C520000);
-		drawVignette(width, height, 0xE0000000);
-		Gui.drawRect(0, 0, width, height / 12, 0xEB000000);
-		Gui.drawRect(0, height * 11 / 12, width, height, 0xEB000000);
-		if (stab > 0f) {
-			int alpha = Math.min(210, 50 + (int)(stab * 160f));
-			drawSlash(width, height, -24f, (alpha << 24) | 0xF0E8E8);
-			drawSlash(width, height, 31f, (Math.max(30, alpha - 35) << 24) | 0xA00000);
-			Gui.drawRect(0, 0, width, height, ((int)(stab * 70f) << 24) | 0x800000);
-		}
-	}
-
-	private void renderBurningCoffin(int width, int height, float time) {
-		int heat = 42 + (int)(Math.abs(MathHelper.sin(time * 0.34f)) * 48f);
-		Gui.drawRect(0, 0, width, height, (heat << 24) | 0x7A1600);
-		drawVignette(width, height, 0xC00A0000);
-		for (int i = 0; i < 5; i++) {
-			int x = Math.floorMod((int)(time * (7 + i * 2) + i * 83), width + 80) - 40;
-			int top = height - Math.floorMod((int)(time * (5 + i) + i * 41), height + 60);
-			Gui.drawRect(x - 22, top, x + 22, Math.min(height, top + 55), 0x32100000);
-		}
-	}
-
-	private static float stabPulse(float time) {
-		float phase = time % 18f;
-		return phase < 7f ? phase / 7f : phase < 10f ? 1f : Math.max(0f, 1f - (phase - 10f) / 5f);
-	}
-
-	private void drawVignette(int width, int height, int color) {
-		int edgeX = Math.max(18, width / 7);
-		int edgeY = Math.max(14, height / 7);
-		Gui.drawRect(0, 0, width, edgeY, color);
-		Gui.drawRect(0, height - edgeY, width, height, color);
-		Gui.drawRect(0, edgeY, edgeX, height - edgeY, color);
-		Gui.drawRect(width - edgeX, edgeY, width, height - edgeY, color);
-	}
-
-	private void drawSlash(int width, int height, float angle, int color) {
-		GlStateManager.pushMatrix();
-		GlStateManager.translate(width * 0.5f, height * 0.5f, 0f);
-		GlStateManager.rotate(angle, 0f, 0f, 1f);
-		Gui.drawRect(-width, -2, width, 2, color);
-		GlStateManager.popMatrix();
-	}
-
-	private void drawInverse(int width, int height) {
-		GlStateManager.enableBlend();
-		GlStateManager.disableTexture2D();
-		GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ONE_MINUS_SRC_COLOR);
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-		buffer.pos(0, height, -90).color(1f, 1f, 1f, 1f).endVertex();
-		buffer.pos(width, height, -90).color(1f, 1f, 1f, 1f).endVertex();
-		buffer.pos(width, 0, -90).color(1f, 1f, 1f, 1f).endVertex();
-		buffer.pos(0, 0, -90).color(1f, 1f, 1f, 1f).endVertex();
-		tessellator.draw();
-		GlStateManager.enableTexture2D();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-		 GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-		GlStateManager.disableBlend();
-	}
-
-	private void renderBox(float x1, float y1, float z1, float x2, float y2, float z2,
-	 float red, float green, float blue, float alpha) {
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder b = tessellator.getBuffer();
-		b.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-		face(b, x1, y1, z1, x2, y1, z1, x2, y2, z1, x1, y2, z1, red, green, blue, alpha);
-		face(b, x2, y1, z2, x1, y1, z2, x1, y2, z2, x2, y2, z2, red, green, blue, alpha);
-		face(b, x1, y1, z2, x1, y1, z1, x1, y2, z1, x1, y2, z2, red, green, blue, alpha);
-		face(b, x2, y1, z1, x2, y1, z2, x2, y2, z2, x2, y2, z1, red, green, blue, alpha);
-		face(b, x1, y2, z1, x2, y2, z1, x2, y2, z2, x1, y2, z2, red, green, blue, alpha);
-		face(b, x1, y1, z2, x2, y1, z2, x2, y1, z1, x1, y1, z1, red, green, blue, alpha);
-		tessellator.draw();
-	}
-
-	private void face(BufferBuilder b, float x1, float y1, float z1, float x2, float y2, float z2,
-	 float x3, float y3, float z3, float x4, float y4, float z4, float red, float green, float blue, float alpha) {
-		b.pos(x1, y1, z1).color(red, green, blue, alpha).endVertex();
-		b.pos(x2, y2, z2).color(red, green, blue, alpha).endVertex();
-		b.pos(x3, y3, z3).color(red, green, blue, alpha).endVertex();
-		b.pos(x4, y4, z4).color(red, green, blue, alpha).endVertex();
-	}
+    private static int type, ticks, duration;
+    private static World effectWorld;
+    private static final GenjutsuStageRenderer stage = new GenjutsuStageRenderer();
+    private static int releaseTicks;
+    private static final Map<Integer, Cast> casts = new HashMap<>();
+    private final Map<net.minecraft.client.renderer.entity.RenderPlayer,net.minecraft.client.model.ModelPlayer> poses = new IdentityHashMap<>();
+    private final GenjutsuCastingModel castStandard=new GenjutsuCastingModel(false),castSlim=new GenjutsuCastingModel(true);
+    private static final java.lang.reflect.Field MAIN_MODEL=net.minecraftforge.fml.relauncher.ReflectionHelper.findField(net.minecraft.client.renderer.entity.RenderLivingBase.class,"mainModel","field_77045_g");
+    private static class Cast { int age, type; Cast(int t) { type=t; } }
+    public static void handleMessage(int kind, int length, int casterId) {
+        Minecraft.getMinecraft().addScheduledTask(() -> {
+            if(kind<0) { releaseTicks=ticks>0?10:0; clear(); }
+            else {activate(kind,length);stage.caster(casterId);}
+        });
+    }
+    public static void activate(int kind,int length) {
+        if(kind<0 || kind>4) return;
+        Minecraft mc=Minecraft.getMinecraft();
+        if(mc.player==null || mc.world==null)return;
+        if(effectWorld!=mc.world)casts.clear();
+        effectWorld=mc.world;type=kind;ticks=duration=Math.max(1,Math.min(200,length));releaseTicks=0;
+        if(kind>0) {
+            SoundEvent sound=SoundEvent.REGISTRY.getObject(new ResourceLocation("narutomod:sharingansfx"));
+            if(sound!=null)mc.player.playSound(sound,.80f,1f);
+        }
+    }
+    public static void cast(int entityId,int kind) {
+        Minecraft mc=Minecraft.getMinecraft();
+        if(mc.world==null || kind<0 || kind>4)return;
+        if(effectWorld!=mc.world){clear();casts.clear();}
+        effectWorld=mc.world;casts.put(entityId,new Cast(kind));
+    }
+    public static void clear() { ticks=duration=0;type=0; }
+    private static int elapsed() { return Math.max(0,duration-ticks); }
+    @SubscribeEvent public void tick(TickEvent.ClientTickEvent event) {
+        if(event.phase!=TickEvent.Phase.END)return;
+        Minecraft mc=Minecraft.getMinecraft();
+        if(mc.world!=effectWorld || mc.player==null || !mc.player.isEntityAlive()) {
+            clear();casts.clear();releaseTicks=0;stage.release();effectWorld=mc.world;return;
+        }
+        if(mc.isGamePaused())return;
+        casts.values().removeIf(c -> ++c.age>36);
+        if(releaseTicks>0)--releaseTicks;
+        if(ticks<=0)return;
+        --ticks;
+        float fade=GenjutsuVisuals.envelope(elapsed(),ticks);
+        // One cue per choreography beat, independent of FPS. No repeated global Sharingan audio.
+        if(type>=2 && (elapsed()%44==0 || elapsed()%44==7))
+            mc.player.playSound(SoundEvents.BLOCK_NOTE_BASEDRUM,.14f*fade,.55f);
+        if(type==1 && elapsed()>16 && elapsed()%36==18)mc.player.playSound(SoundEvents.ENTITY_ENDERMEN_TELEPORT,.19f*fade,.72f);
+        if(type==3 && elapsed()>=32 && (elapsed()-32)%32==0)mc.player.playSound(SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP,.45f*fade,.72f);
+        if(type==3 && elapsed()>=39 && (elapsed()-39)%32==0)mc.player.playSound(SoundEvents.ENTITY_PLAYER_HURT,.26f*fade,.72f);
+        if(type==4 && elapsed()==48)mc.player.playSound(SoundEvents.BLOCK_WOODEN_DOOR_CLOSE,.70f,.65f);
+        if(type==4 && elapsed()>48 && elapsed()%36==16)mc.player.playSound(SoundEvents.BLOCK_FIRE_AMBIENT,.30f*fade,.75f);
+        if(ticks==12)mc.player.playSound(SoundEvents.BLOCK_FIRE_EXTINGUISH,.20f,1.3f);
+    }
+    @SubscribeEvent public void input(InputUpdateEvent event) {
+        if(ticks<=0 || event.getEntityPlayer()!=Minecraft.getMinecraft().player)return;
+        if(type==0) {event.getMovementInput().moveForward*=-1;event.getMovementInput().moveStrafe*=-1;}
+        else if(type==2) {event.getMovementInput().moveForward*=.25f;event.getMovementInput().moveStrafe*=.25f;}
+        else if(type>=3) {
+            event.getMovementInput().moveForward=event.getMovementInput().moveStrafe=0;
+            event.getMovementInput().jump=event.getMovementInput().sneak=false;
+        }
+    }
+    @SubscribeEvent public void camera(EntityViewRenderEvent.CameraSetup event) {
+        if(ticks<=0)return;
+        float time=elapsed()+(float)event.getRenderPartialTicks();
+        float amount=GenjutsuVisuals.envelope(time,ticks);
+        event.setRoll(event.getRoll()+(float)Math.sin(time*.075)*amount*(type==0?2.3f:type==1?1.2f:.45f));
+    }
+    @SubscribeEvent public void fog(EntityViewRenderEvent.FogColors event) {
+        if(ticks<=0)return;
+        float f=GenjutsuVisuals.envelope(elapsed(),ticks)*.55f;
+        event.setRed(event.getRed()*(1-f)+.09f*f);
+        event.setGreen(event.getGreen()*(1-f)+.035f*f);
+        event.setBlue(event.getBlue()*(1-f)+.05f*f);
+    }
+    @SubscribeEvent public void overlay(RenderGameOverlayEvent.Pre event) {
+        Minecraft mc=Minecraft.getMinecraft();
+        if(mc.player==null || event.getType()!=RenderGameOverlayEvent.ElementType.ALL)return;
+        Cast self=casts.get(mc.player.getEntityId());
+        if(ticks<=0 && self==null && releaseTicks<=0)return;
+        float time=elapsed()+event.getPartialTicks(),fade=GenjutsuVisuals.envelope(time,ticks-event.getPartialTicks());
+        double w=event.getResolution().getScaledWidth(),h=event.getResolution().getScaledHeight();
+        // Forge fires Pre.ALL BEFORE setupOverlayRendering. Establish our own GUI projection
+        // without calling that method (which clears the main depth buffer).
+        GlStateManager.matrixMode(GL11.GL_PROJECTION);GlStateManager.pushMatrix();GlStateManager.loadIdentity();
+        GlStateManager.ortho(0,w,h,0,1000,3000);
+        GlStateManager.matrixMode(GL11.GL_MODELVIEW);GlStateManager.pushMatrix();GlStateManager.loadIdentity();
+        GlStateManager.translate(0,0,-2000);
+        if(ticks>0)stage.render(type,time,fade*(type==0?.52f:type==1?.94f:1f),(int)w,(int)h);
+        GlStateManager.disableTexture2D();GlStateManager.disableDepth();
+        GlStateManager.depthMask(false);GlStateManager.disableAlpha();GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(770,771,1,0);
+        BufferBuilder b=Tessellator.getInstance().getBuffer();
+        b.begin(GL11.GL_TRIANGLES,DefaultVertexFormats.POSITION_COLOR);
+        GenjutsuVisuals.Painter painter=(xy,colors)->{
+            for(int i=0;i<3;i++){int c=colors[i];b.pos(xy[i*2]*w,xy[i*2+1]*h,-90).color((c>>16)&255,(c>>8)&255,c&255,(c>>>24)&255).endVertex();}
+        };
+        if(ticks>0)GenjutsuVisuals.draw(painter,type,time,fade);
+        if(releaseTicks>0)GenjutsuVisuals.release(painter,releaseTicks/10f);
+        if(self!=null)GenjutsuVisuals.drawCast(painter,self.type,self.age+event.getPartialTicks(),GenjutsuVisuals.envelope(self.age,36-self.age));
+        Tessellator.getInstance().draw();
+        GlStateManager.enableAlpha();GlStateManager.depthMask(true);GlStateManager.enableDepth();
+        GlStateManager.enableTexture2D();GlStateManager.disableBlend();GlStateManager.color(1,1,1,1);GlStateManager.popMatrix();
+        GlStateManager.matrixMode(GL11.GL_PROJECTION);GlStateManager.popMatrix();GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+    }
+    @SubscribeEvent(priority=net.minecraftforge.fml.common.eventhandler.EventPriority.LOWEST) public void pose(RenderPlayerEvent.Pre event) {
+        Cast cast=casts.get(event.getEntityPlayer().getEntityId());
+        if(cast==null || cast.age>31)return;
+        net.minecraft.client.model.ModelPlayer model=event.getRenderer().getMainModel();
+        GenjutsuCastingModel animated=event.getEntityPlayer() instanceof net.minecraft.client.entity.AbstractClientPlayer
+            && "slim".equals(((net.minecraft.client.entity.AbstractClientPlayer)event.getEntityPlayer()).getSkinType())?castSlim:castStandard;
+        animated.copyVisibility(model);animated.age=cast.age+event.getPartialRenderTick();poses.put(event.getRenderer(),model);
+        try { MAIN_MODEL.set(event.getRenderer(),animated); } catch(IllegalAccessException ex) {throw new IllegalStateException(ex);}
+    }
+    @SubscribeEvent public void unpose(RenderPlayerEvent.Post event) {
+        net.minecraft.client.model.ModelPlayer previous=poses.remove(event.getRenderer());
+        if(previous!=null)try {MAIN_MODEL.set(event.getRenderer(),previous);}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
+    }
+    @SubscribeEvent public void restoreModels(TickEvent.RenderTickEvent event) {
+        if(event.phase!=TickEvent.Phase.END)return;
+        // Also restore if another renderer canceled a player draw after our Pre event.
+        for(Map.Entry<net.minecraft.client.renderer.entity.RenderPlayer,net.minecraft.client.model.ModelPlayer> entry:poses.entrySet())
+            try {MAIN_MODEL.set(entry.getKey(),entry.getValue());}catch(IllegalAccessException ex){throw new IllegalStateException(ex);}
+        poses.clear();
+    }
+    @SubscribeEvent public void world(RenderWorldLastEvent event) {
+        Minecraft mc=Minecraft.getMinecraft();
+        if(mc.world==null)return;
+        for(Map.Entry<Integer,Cast> entry:casts.entrySet()) {
+            Entity entity=mc.world.getEntityByID(entry.getKey());
+            if(!(entity instanceof EntityLivingBase) || (entity==mc.player && mc.gameSettings.thirdPersonView==0))continue;
+            EntityLivingBase caster=(EntityLivingBase)entity;Cast cast=entry.getValue();
+            float age=cast.age+event.getPartialTicks(),fade=GenjutsuVisuals.envelope(age,36-age);
+            double partial=event.getPartialTicks();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(entity.lastTickPosX+(entity.posX-entity.lastTickPosX)*partial-mc.getRenderManager().viewerPosX,
+                entity.lastTickPosY+(entity.posY-entity.lastTickPosY)*partial+entity.getEyeHeight()-mc.getRenderManager().viewerPosY,
+                entity.lastTickPosZ+(entity.posZ-entity.lastTickPosZ)*partial-mc.getRenderManager().viewerPosZ);
+            GlStateManager.rotate(-caster.rotationYawHead,0,1,0);GlStateManager.translate(0,0,.31);
+            GlStateManager.disableLighting();GlStateManager.disableTexture2D();GlStateManager.disableCull();
+            GlStateManager.enableBlend();GlStateManager.disableAlpha();GlStateManager.depthMask(false);
+            GlStateManager.tryBlendFuncSeparate(770,771,1,0);
+            BufferBuilder b=Tessellator.getInstance().getBuffer();b.begin(GL11.GL_TRIANGLES,DefaultVertexFormats.POSITION_COLOR);
+            double radius=.11+.17*(1-GenjutsuVisuals.smooth(age/24));
+            for(int i=0;i<64;i++) {
+                double a=i*Math.PI/32,aa=(i+1)*Math.PI/32;
+                double x=Math.cos(a)*radius,y=Math.sin(a)*radius,xx=Math.cos(aa)*radius,yy=Math.sin(aa)*radius;
+                tri(b,x,y,xx,yy,xx*.90,yy*.90,cast.type==0?.20f:.47f,.025f,.04f,fade*.8f);
+                tri(b,x,y,xx*.90,yy*.90,x*.90,y*.90,cast.type==0?.20f:.47f,.025f,.04f,fade*.8f);
+            }
+            if(cast.type>0)for(int i=0;i<3;i++) {
+                double a=i*Math.PI*2/3+GenjutsuVisuals.smooth(age/30)*1.5;
+                double x=Math.cos(a)*radius*.62,y=Math.sin(a)*radius*.62;
+                tri(b,x-.025,y-.018,x+.025,y-.018,x,y+.04,.015f,.01f,.02f,fade);
+            }
+            Tessellator.getInstance().draw();
+            GlStateManager.depthMask(true);GlStateManager.enableAlpha();GlStateManager.disableBlend();
+            GlStateManager.enableCull();GlStateManager.enableTexture2D();GlStateManager.enableLighting();
+            GlStateManager.color(1,1,1,1);GlStateManager.popMatrix();
+        }
+    }
+    private static void tri(BufferBuilder b,double x,double y,double xx,double yy,double xxx,double yyy,float r,float g,float blue,float alpha) {
+        b.pos(x,y,0).color(r,g,blue,alpha).endVertex();b.pos(xx,yy,0).color(r,g,blue,alpha).endVertex();b.pos(xxx,yyy,0).color(r,g,blue,alpha).endVertex();
+    }
 }

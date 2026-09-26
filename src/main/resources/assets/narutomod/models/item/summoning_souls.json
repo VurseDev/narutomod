@@ -1,0 +1,10 @@
+{
+  "parent": "narutomod:custom/edo_tensei_coffin",
+  "display": {
+    "gui": {"rotation": [15, 145, 0], "translation": [0, -4, 0], "scale": [0.48, 0.48, 0.48]},
+    "firstperson_righthand": {"rotation": [0, 160, 0], "translation": [0, 0, 0], "scale": [0.25, 0.25, 0.25]},
+    "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 1, 0], "scale": [0.25, 0.25, 0.25]},
+    "ground": {"translation": [0, 2, 0], "scale": [0.2, 0.2, 0.2]},
+    "fixed": {"rotation": [0, 180, 0], "translation": [0, -4, 0], "scale": [0.45, 0.45, 0.45]}
+  }
+}

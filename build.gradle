@@ -59,3 +59,52 @@ dependencies {
 
 apply from: 'mcreator.gradle'
 
+// Exercise the actual client model assets during normal builds. Compilation
+// alone cannot detect a missing stage resource or a cyclic animation hierarchy.
+task checkMadaraModels(type: JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'net.narutomod.MadaraModelChecks'
+    workingDir projectDir
+}
+check.dependsOn checkMadaraModels
+
+task checkSusanooCombat(type: JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'net.narutomod.SusanooCombatChecks'
+    workingDir projectDir
+}
+check.dependsOn checkSusanooCombat
+
+task checkPaperBombs(type: JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'net.narutomod.PaperBombChecks'
+    workingDir projectDir
+}
+check.dependsOn checkPaperBombs
+
+task checkOcularSurgery(type: JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'net.narutomod.OcularChecks'
+    workingDir projectDir
+}
+check.dependsOn checkOcularSurgery
+
+task checkBloodlineScrolls(type: JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'net.narutomod.BloodlineScrollChecks'
+    workingDir projectDir
+}
+check.dependsOn checkBloodlineScrolls
+
+task checkBloodlineTechniques(type: JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'net.narutomod.BloodlineTechniqueChecks'
+    workingDir projectDir
+}
+check.dependsOn checkBloodlineTechniques

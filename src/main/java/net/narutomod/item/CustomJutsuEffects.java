@@ -111,30 +111,14 @@ public final class CustomJutsuEffects {
 	public static void onGenjutsu(EntityLivingBase caster, EntityLivingBase target, int type, float mastery) {
 		if (caster == null || target == null || caster.world.isRemote) return;
 		Vec3d center = target.getPositionVector().addVector(0d, target.height * 0.55d, 0d);
-		if (type == 0) {
-			sphere(caster.world, center, 2.4f, 18, 0x802E1648);
-			vanilla(caster.world, EnumParticleTypes.SPELL_WITCH, center.x, center.y, center.z, 48, 0.8d, 0.9d, 0.8d, 0.08d);
-			shakeTarget(target, 8, 0.8f);
-		} else if (type == 1) {
-			concentric(caster.world, center, 3.5f, 36, 0x704B2A8B);
-			vanilla(caster.world, EnumParticleTypes.ENCHANTMENT_TABLE, center.x, center.y, center.z, 80, 1.4d, 1.2d, 1.4d, 0.45d);
-			shakeTarget(target, 14, 1.3f + mastery);
-		} else if (type == 2) {
-			smoke(caster.world, center, 0xD8450810, 90, 1.0d, 0.04d, 48, 9);
-			sweep(caster, center, target.rotationYaw + 180f, 0f, -25f, 0xC8A00010, 4.2f);
-			sweep(caster, center, target.rotationYaw + 180f, 0f, 25f, 0xC8500010, 4.2f);
-			shakeTarget(target, 18, 2.5f + mastery * 1.5f);
-		} else if (type == 3) {
-			for (int i = 0; i < 4; i++) sweep(caster, center, target.rotationYaw + i * 45f, 0f, -55f + i * 35f, 0xD8D01820, 5.0f);
-			sonic(caster.world, center, new Vec3d(0d, 0.08d, 0d), 0x80C01018, 18, 9);
-			vanilla(caster.world, EnumParticleTypes.DAMAGE_INDICATOR, center.x, center.y, center.z, 35, 1.0d, 1.1d, 1.0d, 0.18d);
-			shakeTarget(target, 16, 4.0f + mastery * 2.0f);
-		} else {
-			sphere(caster.world, center, 3.2f, 20, 0xA0200808);
-			flame(caster.world, center, 0xE8C01800, 100, 1.2d, 0.13d, 42);
-			smoke(caster.world, center, 0xE8100808, 65, 1.0d, 0.06d, 50, 10);
-			shakeTarget(target, 14, 2.5f + mastery * 1.5f);
-		}
+		ItemInton.GenjutsuCastMessage.send(caster, type);
+		// One visible chakra snap, followed by ink-like wisps; observers still see the real victim.
+		sonic(caster.world, caster.getPositionEyes(1f), caster.getLookVec().scale(.015), type == 0 ? 0x80AE89E8 : 0xA0D63B50, 10, 3);
+		smoke(caster.world, center, type == 0 ? 0x70463764 : 0x803C192A, 24, 0.45d, 0.025d, 28, 3);
+		vanilla(caster.world, EnumParticleTypes.SPELL_MOB, center.x, center.y, center.z, 10, .30d, .45d, .30d, .01d);
+		if (type == 4) vanilla(caster.world, EnumParticleTypes.SMOKE_NORMAL,
+		 target.posX, target.posY + .15d, target.posZ, 8, .3d, .12d, .3d, .015d);
+		caster.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
 	}
 
 	public static void taijutsu(String name, EntityLivingBase caster, EntityLivingBase target, float power, boolean hit) {

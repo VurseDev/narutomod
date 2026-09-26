@@ -47,6 +47,7 @@ public class ItemNormalEyes extends ElementsNarutomodMod.ModElement {
 	@ObjectHolder("narutomod:normal_eyes_green") public static final Item EYES_GREEN = null;
 	@ObjectHolder("narutomod:normal_eyes_grey") public static final Item EYES_GREY = null;
 	@ObjectHolder("narutomod:normal_eyes_amber") public static final Item EYES_AMBER = null;
+	@ObjectHolder("narutomod:normal_eyes_black") public static final Item EYES_BLACK = null;
 	private static final String EYES_GRANTED = "NarutomodNormalEyesGranted";
 	private static final String EYES_VARIANT = "NarutomodNormalEyesVariant";
 	private static final String BLIND_FROM_MISSING_EYES = "NarutomodBlindFromMissingEyes";
@@ -96,6 +97,7 @@ public class ItemNormalEyes extends ElementsNarutomodMod.ModElement {
 	/** Sight comes only from the actual equipped eye, never from an item stored in inventory. */
 	public static boolean hasSight(EntityLivingBase entity) {
 		if (entity == null) return false;
+		if (net.narutomod.OcularSystem.enabled(entity)) return net.narutomod.OcularSystem.state(entity).hasSight();
 		ItemStack head = entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
 		return isNormalEyes(head) || head.getItem() instanceof ItemDojutsu.Base;
 	}
@@ -173,6 +175,7 @@ public class ItemNormalEyes extends ElementsNarutomodMod.ModElement {
 	}
 
 	private static void giveOrEquipNormalEyes(EntityPlayer player) {
+		if (net.narutomod.OcularSystem.enabled(player)) return;
 		if (EYES == null) return;
 		markGranted(player);
 		ItemStack head = player.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
@@ -219,7 +222,8 @@ public class ItemNormalEyes extends ElementsNarutomodMod.ModElement {
 			this.armorModel.isSneak = living.isSneaking();
 			this.armorModel.isRiding = living.isRiding();
 			this.armorModel.isChild = living.isChild();
-			this.armorModel.highlightHide = true;
+			this.armorModel.highlightHide = this.color != EyeColor.BLACK;
+			this.armorModel.irisTint = this.color == EyeColor.BLACK ? 0.10F : 1.0F;
 			this.armorModel.eyeOffsetX = 0.0F;
 			this.armorModel.eyeOffsetY = EyeCustomization.getVertical(living);
 			this.armorModel.eyeOffsetZ = -0.025F;
@@ -265,7 +269,8 @@ public class ItemNormalEyes extends ElementsNarutomodMod.ModElement {
 		BLUE("normal_eyes_blue", "Blue Eyes", "normal_eyes_blue"),
 		GREEN("normal_eyes_green", "Green Eyes", "normal_eyes_green"),
 		GREY("normal_eyes_grey", "Grey Eyes", "normal_eyes_grey"),
-		AMBER("normal_eyes_amber", "Amber Eyes", "normal_eyes_amber");
+		AMBER("normal_eyes_amber", "Amber Eyes", "normal_eyes_amber"),
+		BLACK("normal_eyes_black", "Black Eyes", "normal_eyes_grey");
 
 		public final String registryName;
 		public final String displayName;

@@ -130,10 +130,14 @@ public class ItemJinton extends ElementsNarutomodMod.ModElement {
 		public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityLivingBase entity, int timeLeft) {
 			if (!world.isRemote) {
 				float power = this.getPower(itemstack, entity, timeLeft);
-				if (power >= 1f && this.executeJutsu(itemstack, entity, power)
-				 && entity instanceof EntityPlayer && !((EntityPlayer)entity).isCreative()) {
-					((EntityPlayer)entity).getCooldownTracker().setCooldown(itemstack.getItem(), 
-					 (int)(this.getUsePercent(timeLeft) * 12000 * ProcedureUtils.getCooldownModifier(((EntityPlayer)entity))));
+				if (power >= 1f && this.executeJutsu(itemstack, entity, power)) {
+					net.narutomod.SusanooCastController.completed(entity, itemstack, this.getCurrentJutsu(itemstack));
+					if (entity instanceof EntityPlayer && !((EntityPlayer)entity).isCreative()) {
+						((EntityPlayer)entity).getCooldownTracker().setCooldown(itemstack.getItem(), 
+						 (int)(this.getUsePercent(timeLeft) * 12000 * ProcedureUtils.getCooldownModifier(((EntityPlayer)entity))));
+					}
+				} else {
+					net.narutomod.SusanooCastController.cancel(entity);
 				}
 			}
 		}

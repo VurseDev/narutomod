@@ -229,7 +229,7 @@ public class EntityFirestream extends ElementsNarutomodMod.ModElement {
 			this.setParticleTextureOffset((age / 2) % 8);
 			this.motionY += 0.003D;
 			if (this.shooter != null) {
-				RayTraceResult res = ProjectileHelper.forwardsRaycast(this, true, true, this.shooter);
+				RayTraceResult res = net.narutomod.SusanooCombat.forwardsRaycast(this, true, true, this.shooter);
 				if (res != null && res.typeOfHit != RayTraceResult.Type.MISS) {
 					this.onImpact(res);
 				}

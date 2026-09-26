@@ -103,7 +103,8 @@ public class EntitySusanooWinged extends ElementsNarutomodMod.ModElement {
 			this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(this.playerXp * 0.003d);
 			this.getEntityData().setDouble("entityModelScale", (double)MODELSCALE);
 			Item helmet = player.getItemStackFromSlot(EntityEquipmentSlot.HEAD).getItem();
-			if (player instanceof EntityPlayer && helmet instanceof ItemSharingan.Base) {
+			if (player instanceof EntityPlayer && helmet instanceof ItemSharingan.Base
+			 && ((ItemSharingan.Base)helmet).getSubType() != ItemSharingan.Type.MADARA) {
 				if (((ItemSharingan.Base)helmet).isEternal() || ((ItemSharingan.Base)helmet).getSubType() == ItemSharingan.Type.AMATERASU) {
 					ItemHandlerHelper.giveItemToPlayer((EntityPlayer)player, kagutsuchi);
 				}

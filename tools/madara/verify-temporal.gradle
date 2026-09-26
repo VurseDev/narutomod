@@ -1,0 +1,32 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            project.tasks.create(name: 'compileMadaraSusanooChecks', type: JavaCompile) {
+                source project.file('src/test/java/net/narutomod/MadaraSusanooChecks.java')
+                classpath = project.files(project.sourceSets.main.output.classesDirs.files) + project.configurations.testRuntimeClasspath
+                destinationDir = project.file('build/susanoo-checks')
+                sourceCompatibility = '1.8'
+                targetCompatibility = '1.8'
+            }
+            project.tasks.create(name: 'verifyMadaraSusanoo', type: JavaExec) {
+                dependsOn project.tasks.compileJava, project.tasks.compileMadaraSusanooChecks
+                classpath = project.files('build/susanoo-checks', project.sourceSets.main.output.classesDirs.files) + project.configurations.testRuntimeClasspath
+                main = 'net.narutomod.MadaraSusanooChecks'
+                workingDir project.projectDir
+            }
+            project.tasks.create(name: 'compileMadaraTemporalChecks', type: JavaCompile) {
+                source project.file('src/test/java/net/narutomod/MadaraTemporalChecks.java')
+                classpath = project.files(project.sourceSets.main.output.classesDirs.files) + project.configurations.testRuntimeClasspath
+                destinationDir = project.file('build/temporal-checks')
+                sourceCompatibility = '1.8'
+                targetCompatibility = '1.8'
+            }
+            project.tasks.create(name: 'verifyMadaraTemporal', type: JavaExec) {
+                dependsOn project.tasks.compileJava, project.tasks.compileMadaraTemporalChecks
+                classpath = project.files('build/temporal-checks', project.sourceSets.main.output.classesDirs.files) + project.configurations.testRuntimeClasspath
+                main = 'net.narutomod.MadaraTemporalChecks'
+                workingDir project.projectDir
+            }
+        }
+    }
+}

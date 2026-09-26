@@ -46,6 +46,7 @@ public class ItemIryoJutsu extends ElementsNarutomodMod.ModElement {
 	public static final ItemJutsu.JutsuEnum POISONMIST = new ItemJutsu.JutsuEnum(1, "poison_mist", 'B', 20d, new EntityPoisonMist.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum MEDMODE = new ItemJutsu.JutsuEnum(2, "cellular_activation", 'A', 20d, new EntityCellularActivation.EC.Jutsu());
 	public static final ItemJutsu.JutsuEnum POWERMODE = new ItemJutsu.JutsuEnum(3, "enhanced_strength", 'A', 30d, new EntityEnhancedStrength.EC.Jutsu());
+	public static final ItemJutsu.JutsuEnum SURGERY = new ItemJutsu.JutsuEnum(4, "jutsu.narutomod.ocular_surgery", 'A', 0, 0d, new SurgeryJutsu());
 
 	public ItemIryoJutsu(ElementsNarutomodMod instance) {
 		super(instance, 523);
@@ -53,7 +54,7 @@ public class ItemIryoJutsu extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void initElements() {
-		elements.items.add(() -> new RangedItem(HEALING, POISONMIST, MEDMODE, POWERMODE));
+		elements.items.add(() -> new RangedItem(HEALING, POISONMIST, MEDMODE, POWERMODE, SURGERY));
 	}
 
 	@Override
@@ -63,6 +64,33 @@ public class ItemIryoJutsu extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static class RangedItem extends ItemJutsu.Base {
+		@Override @SideOnly(Side.CLIENT) public void addInformation(ItemStack stack, World world, java.util.List<String> lines, net.minecraft.client.util.ITooltipFlag flag) {
+			super.addInformation(stack, world, lines, flag);
+			lines.removeIf(line -> line.contains(SURGERY.getName()));
+			lines.add("Ocular Surgery: " + getJutsuXp(stack, HEALING) + "/3,000 Healing XP");
+			lines.add("Unlocks automatically. Sneak-cast for self; aim at a player for surgery.");
+		}
+		public boolean qualifiedForSurgery(ItemStack stack, EntityPlayer player) {
+			return this.isOwner(stack, player) && net.narutomod.OcularPolicy.qualified(this.getJutsuXp(stack, HEALING));
+		}
+
+		@Override public void onUpdate(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+			super.onUpdate(stack, world, entity, slot, selected);
+			if (!world.isRemote && entity instanceof EntityPlayer && entity.ticksExisted % 20 == 0) {
+				boolean qualified = qualifiedForSurgery(stack, (EntityPlayer)entity);
+				if (this.isOwner(stack, (EntityPlayer)entity) && this.isJutsuEnabled(stack, SURGERY) != qualified)
+					this.enableJutsu(stack, SURGERY, qualified);
+			}
+		}
+
+		@Override protected int getTrainingXpCap(ItemStack stack, ItemJutsu.JutsuEnum jutsu) {
+			return jutsu == HEALING ? Math.max(3000, super.getTrainingXpCap(stack, jutsu)) : super.getTrainingXpCap(stack, jutsu);
+		}
+
+		@Override public float getCurrentJutsuXpModifier(ItemStack stack, EntityLivingBase entity) {
+			return this.getCurrentJutsu(stack) == HEALING ? Math.max(1f/3f, super.getCurrentJutsuXpModifier(stack, entity))
+				: this.getCurrentJutsu(stack) == SURGERY ? 1f : super.getCurrentJutsuXpModifier(stack, entity);
+		}
 		public RangedItem(ItemJutsu.JutsuEnum... list) {
 			super(ItemJutsu.JutsuEnum.Type.IRYO, list);
 			this.setUnlocalizedName("iryo_jutsu");
@@ -75,9 +103,12 @@ public class ItemIryoJutsu extends ElementsNarutomodMod.ModElement {
 			if (!world.isRemote) {
 				float power = this.getPower(stack, entity, timeLeft);
 				if (this.executeJutsu(stack, entity, power)) {
+					net.narutomod.SusanooCastController.completed(entity, stack, this.getCurrentJutsu(stack));
 					if (this.getCurrentJutsu(stack) != HEALING || timeLeft < this.getMaxUseDuration() - 200) {
 						this.addCurrentJutsuXp(stack, 1);
 					}
+				} else {
+					net.narutomod.SusanooCastController.cancel(entity);
 				}
 			}
 		}
@@ -85,9 +116,17 @@ public class ItemIryoJutsu extends ElementsNarutomodMod.ModElement {
 		private float xpModifier(EntityLivingBase player, ItemStack stack) {
 			return (float)Chakra.getLevel(player) 
 			 * (player instanceof EntityPlayer && ((EntityPlayer)player).isCreative() 
-			  ? 1f : (float)this.getCurrentJutsuXp(stack) / (float)this.getCurrentJutsuRequiredXp(stack));
+			  ? 1f : Math.min(3f, (float)this.getCurrentJutsuXp(stack) / (float)this.getCurrentJutsuRequiredXp(stack)));
 		}
 	}
+
+	public static class SurgeryJutsu implements ItemJutsu.IJutsuCallback {
+		@Override public boolean createJutsu(ItemStack stack, EntityLivingBase entity, float power) {
+			if (entity instanceof net.minecraft.entity.player.EntityPlayerMP && stack == entity.getHeldItemMainhand())
+				net.narutomod.MedicalSurgery.open((net.minecraft.entity.player.EntityPlayerMP)entity);
+			return false; // Menu opening grants no XP, consumes no chakra and creates no reusable cast.
+		}
+	}
 
 	public static class HealingJutsu implements ItemJutsu.IJutsuCallback {
 		@Override
