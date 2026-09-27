@@ -85,6 +85,7 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 
 	@Override
 	public void preInit(FMLPreInitializationEvent event) {
+		StatsPolicy.ENABLED = ModConfig.BETTER_STAT_CURVES;
 		elements.addNetworkMessage(UpgradeMessage.Handler.class, UpgradeMessage.class, Side.SERVER);
 		elements.addNetworkMessage(RequestSyncMessage.Handler.class, RequestSyncMessage.class, Side.SERVER);
 		elements.addNetworkMessage(SyncMessage.Handler.class, SyncMessage.class, Side.CLIENT);
@@ -189,6 +190,7 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 
 	public static double getMovementBonus(EntityPlayer player) {
 		double stat = getStat(player, 0);
+		if (StatsPolicy.ENABLED) return StatsPolicy.movementAdd(stat);
 		return 0.012d * Math.log10(1.0d + stat) + 0.00015d * Math.pow(stat, 0.45d);
 	}
 
@@ -197,6 +199,7 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static double getEffectiveAttackBonus(EntityPlayer player) {
+		if (StatsPolicy.ENABLED) return StatsPolicy.attackBonus(getStat(player, 1));
 		return progressive(getStat(player, 1), 0.04d, 0.80d);
 	}
 
@@ -211,6 +214,7 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static double getResistanceDamageMultiplier(EntityPlayer player) {
+		if (StatsPolicy.ENABLED) return StatsPolicy.resistanceDamageFactor(getStat(player, 2));
 		return 1.0d / Math.sqrt(1.0d + getResistanceRating(player) / 100.0d);
 	}
 
@@ -218,7 +222,13 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 		return 1.0d - getResistanceDamageMultiplier(player);
 	}
 
+	/** Battle XP's share of max health — original value kept per user direction. */
+	public static double battleXpHealthShare() {
+		return 0.005d;
+	}
+
 	public static double getEffectiveMaxHealth(EntityPlayer player) {
+		if (StatsPolicy.ENABLED) return StatsPolicy.maxHealth(getStat(player, 3), PlayerTracker.getBattleXp(player));
 		return 20.0d + PlayerTracker.getBattleXp(player) * 0.005d
 		 + progressive(getStat(player, 3), 0.24d, 0.80d);
 	}
@@ -228,7 +238,7 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static double getHealthBonus(EntityPlayer player) {
-		double battleHealth = PlayerTracker.getBattleXp(player) * 0.005d;
+		double battleHealth = PlayerTracker.getBattleXp(player) * battleXpHealthShare();
 		return Math.max(0.0d, getDisplayedMaxHealth(player) - 20.0d - battleHealth);
 	}
 
@@ -247,20 +257,40 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 		return progressive(physical, 5.0d, 0.78d);
 	}
 
+	/** Full chakra/stamina pools; Chakra.PathwayPlayer derives its max from these. */
+	public static double getMaxResourcePool(EntityPlayer player) {
+		if (StatsPolicy.ENABLED) return StatsPolicy.chakraPool(getStat(player, 4), PlayerTracker.getBattleXp(player));
+		return PlayerTracker.getBattleXp(player) * 0.5d + getChakraBonus(player);
+	}
+
+	public static double getMaxStaminaPool(EntityPlayer player) {
+		long physical = 0L;
+		for (int i = 0; i < 4; i++) physical += getStat(player, i);
+		return PlayerTracker.getBattleXp(player) * 0.35d + 120.0d + getStaminaBonus(player);
+	}
+
 	public static double getSpiRegenBonus(EntityPlayer player, double maximumChakra) {
 		long stat = getStat(player, 5);
+		if (StatsPolicy.ENABLED) return StatsPolicy.regenPerSecond(stat, maximumChakra) / 20.0d;
 		double flat = progressive(stat, 0.0025d, 0.65d);
 		double reserveRatio = 0.00005d + 0.00003d * Math.log10(1.0d + stat);
 		return flat + Math.max(0.0d, maximumChakra) * reserveRatio;
 	}
 
 	public static int getChakraRegenLockTicks(EntityPlayer player) {
+		if (StatsPolicy.ENABLED) return StatsPolicy.regenLockTicks(getStat(player, 5));
 		return Math.max(20, 100 - (int)Math.round(10.0d * Math.log10(1.0d + getStat(player, 5))));
 	}
 
 	public static double getTaijutsuDamageBonus(EntityPlayer player) {
+		if (StatsPolicy.ENABLED) return StatsPolicy.taijutsuBonus(getStat(player, 1), getStat(player, 0));
 		return getEffectiveAttackBonus(player) * 0.55d
 		 + progressive(getStat(player, 0), 0.02d, 0.72d);
+	}
+
+	/** Universal ninjutsu damage multiplier from the Chakra stat; legacy mode returns 1. */
+	public static double getJutsuDamageMultiplier(EntityPlayer player) {
+		return StatsPolicy.ENABLED ? StatsPolicy.jutsuDamageMultiplier(getStat(player, 4)) : 1.0d;
 	}
 
 	public static String getStatEffectText(EntityPlayer player, int stat) {
@@ -270,6 +300,8 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 			case 1:
 				return String.format(Locale.ROOT, "Attack +%.1f effective | melee/Taijutsu", getEffectiveAttackBonus(player));
 			case 2:
+				if (StatsPolicy.ENABLED) return String.format(Locale.ROOT, "Damage taken %.1f%%",
+				 getResistanceDamageMultiplier(player) * 100.0d);
 				return String.format(Locale.ROOT, "Defense %.1f | reduction %.1f%%", getResistanceRating(player),
 				 getResistanceReduction(player) * 100.0d);
 			case 3:
@@ -278,9 +310,7 @@ public class PlayerStats extends ElementsNarutomodMod.ModElement {
 			case 4:
 				return String.format(Locale.ROOT, "Maximum chakra +%.0f | faster casting", getChakraBonus(player));
 			case 5:
-				double maximum = Chakra.isStaminaMode(player)
-				 ? PlayerTracker.getBattleXp(player) * 0.35d + 120.0d + getStaminaBonus(player)
-				 : PlayerTracker.getBattleXp(player) * 0.5d + getChakraBonus(player);
+				double maximum = Chakra.isStaminaMode(player) ? getMaxStaminaPool(player) : getMaxResourcePool(player);
 				return String.format(Locale.ROOT, "Regen +%.1f/s | combat delay %.1fs", getSpiRegenBonus(player, maximum) * 20.0d,
 				 getChakraRegenLockTicks(player) / 20.0d);
 			default:

@@ -327,6 +327,13 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 			if (jutsu == null || !net.narutomod.GenjutsuSession.canUse(player, jutsu)) {
 				return new ActionResult<ItemStack>(EnumActionResult.FAIL, stack);
 			}
+			// 2026-09 rebalance: a copied jutsu pays at least the source rank's cooldown
+			// floor; the temp original's callback cooldown would otherwise be discarded.
+			if (stack.hasTagCompound() && world.getTotalWorldTime() < stack.getTagCompound().getLong("CopyJutsuCooldownUntil")) {
+				if (!world.isRemote) player.sendStatusMessage(new TextComponentTranslation("message.narutomod.sharingan_copy.cooldown",
+				 Math.max(1L, (stack.getTagCompound().getLong("CopyJutsuCooldownUntil") - world.getTotalWorldTime()) / 20L + 1L)), true);
+				return new ActionResult<ItemStack>(EnumActionResult.FAIL, stack);
+			}
 			player.setActiveHand(hand);
 			if (!world.isRemote) net.narutomod.SusanooCastController.prepare(player, stack, jutsu);
 			return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, stack);
@@ -372,7 +379,12 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 			}
 			ItemJutsu.Base base = (ItemJutsu.Base)temp.getItem();
 			float power = base.getPower(temp, entity, timeLeft);
-			double cost = Math.max(jutsu.chakraUsage * 0.70d, jutsu.chakraUsage * power);
+			// 2026-09 rebalance: copies use the standard rank-capped economy with the
+			// caster's own mastery instead of the old flat 70% bypass.
+			float copyMastery = ItemJutsu.getJutsuMastery(stack, jutsu, entity);
+			double cost = jutsu.chakraUsage > 0d
+			 ? ItemJutsu.getCustomResourceCost(jutsu.chakraUsage, jutsu.rank, entity, power, copyMastery)
+			   * ItemByakugan.getTenketsuCostMultiplier(entity) : 0d;
 			if (jutsu.chakraUsage > 0d && Chakra.pathway(entity).getAmount() < cost) {
 				Chakra.pathway(entity).warningDisplay();
 				return;
@@ -387,6 +399,11 @@ public class ItemSharinganCopy extends ElementsNarutomodMod.ModElement {
 			}
 			if (jutsu.jutsu.createJutsu(temp, entity, power)) {
 				Chakra.pathway(entity).consume(cost);
+				if (stack.hasTagCompound()) {
+					long minimumExpiry = world.getTotalWorldTime() + ItemJutsu.getCustomCooldownTicks(jutsu.rank);
+					NBTTagCompound copyTag = stack.getTagCompound();
+					copyTag.setLong("CopyJutsuCooldownUntil", Math.max(copyTag.getLong("CopyJutsuCooldownUntil"), minimumExpiry));
+				}
 				net.narutomod.SusanooCastController.completed(entity, stack, jutsu);
 				stack.shrink(1);
 				player.sendStatusMessage(new TextComponentTranslation("message.narutomod.sharingan_copy.forgotten"), true);

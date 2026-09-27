@@ -1,11 +1,13 @@
-# Stats & jutsu economy rebalance — proposal
+# Stats & jutsu economy rebalance — historical working proposal
 
-Status: 2026-09-26. **Proposal only — nothing in this document is applied to the build.** Per the house rule in `docs/merge_handoff.md`: never merge rebalance numbers as code without user approval and a broad rebalance pass. This document is the audit + the proposed calculation, verified numerically; implementation is phased and gated on approval.
+> **Superseded as an implementation report:** use [`STATS_AND_BALANCE.md`](STATS_AND_BALANCE.md) for audited current formulas and the new clearly separated proposal. Several completion claims and example values below do not match the current source.
+
+Status: 2026-09-26, updated same day. **P1–P4 are implemented and passing** (`gradle check` → `checkStatsRebalance` 591 checks + all pre-existing fixtures); the approved defaults were used for the five §11 decisions (chakra-stat damage scaling yes, movement clamp +150%, XP HP share 0.002, all legacy jutsus flipped at once, §6 special S-rank costs). **Nothing is live-tested yet** — the §10 P5 rebalance sweep (NPC damage, healing, rewards, XP thresholds) and the two-client acceptance pass remain open. Per the house rule in `docs/merge_handoff.md`: fixtures prove math, not gameplay; never claim silent completion.
 
 ## 1. Scope and non-goals
 
 - In scope: the six RP stats (`PlayerStats`), the chakra/stamina pool (`Chakra`), jutsu chakra costs, jutsu cooldowns, jutsu damage normalization, and consolidation of the stat commands.
-- **Non-goals:** no changes to animation code (the hand-written animation systems stay exactly as they are — see `memory`/audit note; they deliberately do not use GeckoLib), no GeckoLib runtime added, `port-1.20.1/` stays scratched, no `JutsuEnum` index renumbering, no NBT key changes, no registry renames, legacy command aliases stay registered for compatibility, curse marks stay retired, Luna's Raikiri stays disabled.
+- **Non-goals:** no changes to animation code (the hand-written animation systems stay exactly as they are — see `memory`/audit note; they deliberately do not use GeckoLib), no GeckoLib runtime added, no `JutsuEnum` index renumbering, no NBT key changes, no registry renames, legacy command aliases stay registered for compatibility, curse marks stay retired, Luna's Raikiri stays disabled.
 - Stat **spending stays capped**: rank per-stat caps + personal caps + a single point reserve, exactly as today. Only the *effect curves* and the economy change.
 
 ## 2. Diagnosis (audit 2026-09-26, all values computed from the working tree)

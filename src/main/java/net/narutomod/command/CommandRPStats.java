@@ -208,17 +208,6 @@ public class CommandRPStats extends ElementsNarutomodMod.ModElement {
 		}
 	}
 
-	public static class SetStatPointCapCommand extends AdminCommand {
-		@Override public String getName() { return "setstatpointcap"; }
-		@Override public String getUsage(ICommandSender sender) { return "/setstatpointcap <player> <amount>"; }
-		@Override public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-			if (args.length < 2) throw new CommandException(getUsage(sender));
-			EntityPlayerMP player = target(server, sender, args);
-			PlayerStats.setPointLimit(player, parseInt(args[1]));
-			send(sender, "Set " + player.getName() + " point capacity to " + PlayerStats.getPointLimit(player));
-		}
-	}
-
 	public static class SetClanCommand extends AdminCommand {
 		@Override public String getName() { return "setclan"; }
 		@Override public String getUsage(ICommandSender sender) { return "/setclan <player> <clan>"; }

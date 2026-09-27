@@ -221,9 +221,9 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 		@Override
 		protected void resetMax() {
 			if (Chakra.isStaminaMode(this.user)) {
-				this.setMax(PlayerTracker.getBattleXp(this.user) * 0.35d + 120d + PlayerStats.getStaminaBonus(this.user));
+				this.setMax(PlayerStats.getMaxStaminaPool(this.user));
 			} else {
-				this.setMax(PlayerTracker.getBattleXp(this.user) * 0.5d + PlayerStats.getChakraBonus(this.user));
+				this.setMax(PlayerStats.getMaxResourcePool(this.user));
 			}
 		}
 
@@ -273,8 +273,7 @@ public class Chakra extends ElementsNarutomodMod.ModElement {
 				}
 			}
 			boolean stamina = Chakra.isStaminaMode(this.user);
-			double d = stamina ? PlayerTracker.getBattleXp(this.user) * 0.35d + 120d + PlayerStats.getStaminaBonus(this.user)
-			 : PlayerTracker.getBattleXp(this.user) * 0.5d + PlayerStats.getChakraBonus(this.user);
+			double d = stamina ? PlayerStats.getMaxStaminaPool(this.user) : PlayerStats.getMaxResourcePool(this.user);
 			if (d != this.getMax() || stamina != this.staminaMode || this.forceSync) {
 				this.forceSync = false;
 				this.staminaMode = stamina;

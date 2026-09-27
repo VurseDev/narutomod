@@ -1,0 +1,13 @@
+// gradle -I tools/stats/verify.gradle verifyStatsRebalance --offline --no-daemon --console=plain
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('java')) {
+            project.tasks.create(name: 'verifyStatsRebalance', type: JavaExec) {
+                dependsOn project.tasks.testClasses
+                classpath = project.sourceSets.test.runtimeClasspath
+                main = 'net.narutomod.StatsRebalanceChecks'
+                workingDir project.projectDir
+            }
+        }
+    }
+}

@@ -62,6 +62,9 @@ public class ModConfig extends ElementsNarutomodMod.ModElement {
 	@Config.Comment("Ninja XP gain multiplier (higher value gains NinjaXp faster. default=0.5)")
 	public static double NINJAXP_MULTIPLIER = 0.5D;
 
+	@Config.Comment("2026-09 stats rebalance: use the new stat effect curves and stat-driven chakra pools (docs/stats_and_jutsu_economy_rebalance.md). Set false to restore the pre-rebalance formulas.")
+	public static boolean BETTER_STAT_CURVES = true;
+
 	public ModConfig(ElementsNarutomodMod instance) {
 		super(instance, 837);
 	}

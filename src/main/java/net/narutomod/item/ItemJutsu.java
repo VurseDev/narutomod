@@ -41,6 +41,7 @@ import net.narutomod.Particles;
 import net.narutomod.PlayerTracker;
 import net.narutomod.PlayerStats;
 import net.narutomod.ElementalTraining;
+import net.narutomod.StatsPolicy;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -198,26 +199,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		if (baseCost <= 0d || entity == null) {
 			return Math.max(0d, baseCost);
 		}
-		double mastery = MathHelper.clamp((double)masteryIn, 0d, 1d);
-		double maxResource = Math.max(0d, Chakra.pathway(entity).getMax());
-		double excessResource = Math.max(0d, maxResource - 500d);
-		double poolRatio = rank == 'S' ? 0.05d : rank == 'A' ? 0.035d : rank == 'B' ? 0.025d
-		 : rank == 'C' ? 0.015d : rank == 'D' ? 0.01d : 0.02d;
-
-		// Fixed costs fall to 65%; the large-pool surcharge falls to 20% at full mastery.
-		double fixedEfficiency = 1.0d - 0.35d * mastery;
-		double poolEfficiency = 1.0d - 0.80d * mastery;
-		double charge = Math.max(1.0d, (double)power);
-		double minimumCost = baseCost * fixedEfficiency;
-		double calculatedCost = (minimumCost + excessResource * poolRatio * poolEfficiency) * charge;
-
-		// Per-cast ceilings still make higher ranks meaningfully more expensive.
-		double noviceCap = rank == 'S' ? 0.40d : rank == 'A' ? 0.32d : rank == 'B' ? 0.25d
-		 : rank == 'C' ? 0.18d : rank == 'D' ? 0.12d : 0.22d;
-		double masterCap = rank == 'S' ? 0.15d : rank == 'A' ? 0.11d : rank == 'B' ? 0.08d
-		 : rank == 'C' ? 0.06d : rank == 'D' ? 0.04d : 0.07d;
-		double maximumCost = maxResource * (noviceCap + (masterCap - noviceCap) * mastery);
-		return Math.max(minimumCost, Math.min(calculatedCost, Math.max(minimumCost, maximumCost)));
+		return StatsPolicy.customResourceCost(baseCost, rank, Chakra.pathway(entity).getMax(), power, masteryIn);
 	}
 
 	/** Legacy uncharged/novice calculation retained for compatibility. */
@@ -226,8 +208,7 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 	}
 
 	public static long getCustomCooldownTicks(char rank) {
-		return rank == 'S' ? 600L : rank == 'A' ? 360L : rank == 'B' ? 240L
-		 : rank == 'C' ? 140L : rank == 'D' ? 80L : 200L;
+		return StatsPolicy.getRankCooldownFloorTicks(rank);
 	}
 	
 	public abstract static class Base extends Item {
@@ -320,6 +301,8 @@ public class ItemJutsu extends ElementsNarutomodMod.ModElement {
 		}
 
 		private void applyCustomCooldownFloor(ItemStack stack, EntityLivingBase entity, JutsuEnum jutsuEnum) {
+			// Rank floors bind ONLY custom-balance jutsus; original-mod jutsus keep their
+			// upstream cooldown behavior (user direction 2026-09-26).
 			if (!jutsuEnum.usesCustomBalance()) {
 				return;
 			}

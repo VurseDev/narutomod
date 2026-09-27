@@ -220,7 +220,7 @@ public class PlayerTracker extends ElementsNarutomodMod.ModElement {
 		@SubscribeEvent
 		public void onTick(TickEvent.PlayerTickEvent event) {
 			if (event.phase == TickEvent.Phase.END && event.player instanceof EntityPlayerMP) {
-				double d = getBattleXp(event.player) * 0.005d;
+				double d = getBattleXp(event.player) * PlayerStats.battleXpHealthShare();
 				if (d > 0d) {
 					IAttributeInstance maxHealthAttr = event.player.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH);
 					AttributeModifier attr = maxHealthAttr.getModifier(HP_UUID);

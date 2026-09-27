@@ -168,7 +168,9 @@ public final class BloodlineTechniques extends ElementsNarutomodMod.ModElement {
             if (source.world.rayTraceBlocks(origin, point, true, false, false) != null) continue;
             float falloff = 1f - .4f * MathHelper.clamp((float)distance / radius, 0f, 1f);
             DamageSource damageSource = ItemJutsu.causeJutsuDamage(source, owner).setFireDamage().setExplosion();
-            if (!victim.attackEntityFrom(damageSource, damage * falloff) || !ItemJutsu.canTarget(victim)) continue;
+            float statScale = owner instanceof EntityPlayer
+                ? (float)net.narutomod.PlayerStats.getJutsuDamageMultiplier((EntityPlayer)owner) : 1f;
+            if (!victim.attackEntityFrom(damageSource, damage * falloff * statScale) || !ItemJutsu.canTarget(victim)) continue;
             hits++;
             victim.setFire(fireSeconds);
             Vec3d away = box.getCenter().subtract(origin);
@@ -241,7 +243,8 @@ public final class BloodlineTechniques extends ElementsNarutomodMod.ModElement {
             }
             if (!spawned) return false;
             play(caster.world, caster.getPositionVector(), sound("flamethrow"), 1.05f, .78f);
-            ItemJutsu.setCurrentJutsuCooldown(stack, caster, 280);
+            // Unscaled setter so the rank floor always binds identically across the family.
+            ItemJutsu.setCurrentJutsuCooldown(stack, 280);
             return true;
         }
     }
@@ -258,7 +261,7 @@ public final class BloodlineTechniques extends ElementsNarutomodMod.ModElement {
             company.damageScale = mastery(stack, ItemKaton.FLAMECOMPANY, caster);
             if (!caster.world.spawnEntity(company)) return false;
             play(caster.world, caster.getPositionVector(), sound("flamethrow"), .7f, 1.5f);
-            ItemJutsu.setCurrentJutsuCooldown(stack, caster, 420);
+            ItemJutsu.setCurrentJutsuCooldown(stack, 420);
             return true;
         }
     }
@@ -297,7 +300,7 @@ public final class BloodlineTechniques extends ElementsNarutomodMod.ModElement {
             chosen.consumeForThrow();
             play(caster.world, caster.getPositionVector(), sound("kagebunshin"), .95f, 1.25f);
             play(caster.world, caster.getPositionVector(), sound("windblast"), .7f, 1.2f);
-            ItemJutsu.setCurrentJutsuCooldown(stack, caster, 180);
+            ItemJutsu.setCurrentJutsuCooldown(stack, 180);
             return true;
         }
     }

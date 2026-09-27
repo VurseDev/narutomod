@@ -12,6 +12,10 @@ build/
 # Minecraft client/server files
 run/
 
+# Local runtime and assistant state
+logs/
+.zcode/
+
 # MCreator generator ignores
 #src/main/resources/assets/*/models/custom
 #src/main/resources/assets/*/models/item

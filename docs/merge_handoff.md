@@ -1,10 +1,12 @@
-# NarutoMod 1.12.2 — implementation and merge handoff
+# NarutoMod 1.12.2 — historical September 25 handoff
+
+> **Superseded for current source:** begin with [`../AI_HANDOFF.md`](../AI_HANDOFF.md). This snapshot remains useful history, but some surgery routing, stat implementation, artifact and verification details are stale. Do not use it as the current merge specification.
 
 Status: 2026-09-25. This document is for another AI working with this source tree and a second mod's source. It describes the current `narutomod` implementation, preservation constraints, assets, calculations, tests, and remaining live acceptance work. It is **not** permission to redesign or replace the user's surgery, dojutsu selection, Susanoo, or other established mechanics. The stat progression in the last section is a **proposal only**; it has not been applied to the mod.
 
 ## Baseline and non-negotiable merge rules
 
-- Production target is **Minecraft Forge 1.12.2, Java 8, Gradle 4.9**. Runtime mod ID is `narutomod`, version `0.3.2-beta` in `NarutomodMod.java`. `build.gradle` still carries an old generic `version = "1.0"` / archive placeholder; identify a release by the packaged `@Mod` version and contents, not the Gradle filename. `port-1.20.1/` is a separate experimental scaffold, **not** part of this 1.12.2 release.
+- Production target is **Minecraft Forge 1.12.2, Java 8, Gradle 4.9**. Runtime mod ID is `narutomod`, version `0.3.2-beta` in `NarutomodMod.java`. `build.gradle` still carries an old generic `version = "1.0"` / archive placeholder; identify a release by the packaged `@Mod` version and contents, not the Gradle filename.
 - This working tree is intentionally dirty and contains many new, untracked source files and assets. A merge based only on `git diff` or only on committed files will silently omit major systems. Include tracked changes **and** relevant untracked files; do not copy `build/`, `logs/`, caches, or prior release JARs as source.
 - `docs/merge_source_manifest.md` lists 249 other changed/new files visible in the working tree for this handoff (excluding logs/build output), including dormant and nonproduction files marked in its preface. Use it as an audit checklist, not as an instruction to activate every listed file.
 - Merge class behavior and registries deliberately. Preserve the `narutomod` namespace, existing item/entity registry names, `ItemJutsu.JutsuEnum` numeric positions, scroll ordering, existing NBT keys and saved-data formats. Do not renumber slots or blindly replace `ElementsNarutomodMod`, `NarutomodMod` packet setup, keybindings or client proxy with the other mod's equivalents. Resolve duplicate event subscriptions and packet registration explicitly. Put the **same newly built JAR** on client and dedicated server; never load two different NarutoMod versions together.

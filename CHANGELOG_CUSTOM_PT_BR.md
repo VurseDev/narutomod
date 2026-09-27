@@ -240,3 +240,48 @@ T
 - [x] Build completo do Forge/Gradle concluído com sucesso.
 - [x] JAR atual: `build/libs/modid-1.0.jar`.
 - [x] SHA-256 do build revisado: `A97C64AFD7C69D7E397DD2310AB8C636F79CC9F2ABE8B9DC61513460DBFE85F1`.
+
+## Rebalanceio de atributos e economia de jutsus (2026-09-26)
+
+Plano: `docs/stats_and_jutsu_economy_rebalance.md`. Nada disto está verificado em jogo ainda — os testes headless provam a matemática, não a gameplay.
+
+### Curvas de atributos (config `BETTER_STAT_CURVES`, padrão ligado; desligue para voltar às fórmulas antigas)
+
+- [x] Nova curva única `F(s) = (s/250)^0.6` ancorada no teto de Genin: cada 10x de atributo dá ~4x de efeito, sem platô — 100k continua claramente acima de 2.5k e 1M acima de 100k.
+- [x] Velocidade: +14% (100) a +25% (Genin) a +99% (Hokage) de movimento, com teto físico de +150% acima de qualquer rank jogável.
+- [x] Força: bônus de ataque 2.5·F (Genin +2.5, Hokage +10); o multiplicador de overflow permanece como válvula de segurança para tetos pessoais extremos.
+- [x] Resistência: dano recebido 1/(1+0.14·F) — Genin −12%, Chunin −19%, Jonin −26%, Hokage −36%; nunca chega a 0%.
+- [x] Vida: 20 + 8·F + 0.002·XP (a participação do Battle XP caiu de +500 para +200 no máximo); a compressão acima de 1000 de HP exibido volta a ser alcançável em extremos.
+- [x] Pool de chakra dirigido pelo atributo: 150 + 350·F + 30·√(XP/100000) — o Battle XP deixa de ser 95% do pool; stamina 100 + 0.9·(soma)^0.75 + 15·√(XP).
+- [x] SPI: regeneração = pool·(1.2% + 1.2%·F)/s limitada a 6% do pool por segundo; trava de combate cai de 5s até 0.5s.
+- [x] Esquiva (disputa de Velocidade) e upkeep de Susanoo/Edo/olhos permanecem como estavam.
+- [x] Esqiva de build mantida: tetos por rank + reserva única de pontos intactos; sugerido ao staff: None 200 / Genin 500 / Chunin 900 / Jonin 1500 / Hokage 3000 pontos totais.
+
+### Economia de chakra e cooldowns
+
+- [x] Bases de custo por rank normalizadas: D 30 / C 55 / B 90 / A 140 / S 200, com especiais documentados (Rasenshuriken 400, Kirin 300, Wood Buddha 400, Eight Snakes/Gamarinsho 300, Jinton 250→200, Wood Golem 400); utilidades podem ficar uma faixa abaixo.
+- [x] ~110 jutsus legados convertidos para `.withCustomBalance()` (custo limitado por rank com desconto de maestria) — Suiton, Doton, Futon, Katon, Raiton, Inton, Iryo, Jiton, Shikotsumyaku, Shoton, Hyoton, Mokuton, Senjutsu, Six Path, Bakuton, Shakuton, Yoton, Yooton, Ranton, Futton, Tenseigan, Kekkei Mora, invocações, Ninken etc.
+- [x] Corrigidos custos quebrados: Kage Bunshin/Multi Clone custavam 0 (agora 90/140), Hiraishin 10 (agora A-rank 140), todo o set Kekkei Mora custava 10 com o "80 Gods" de 500 de dano (agora 200), Sage Mode 10 (agora 200), Sand Levitation 0.25, Crystal Thorns 2, Finger Bones 5 etc.
+- [x] Piso de cooldown por rank (D 4s / C 7s / B 12s / A 18s / S 30s) agora se aplica a TODOS os jutsus, não só aos de balanceamento customizado — os ~80 jutsus sem cooldown nenhum (Suiton/Hyoton/Shakuton/Bakuton/Jinton legados etc.) ficam presos ao piso.
+- [x] Convenção de cooldown unificada no setter não-escalado (Bloodlines/Inuzuka usavam setter escalado por nível; agora o piso sempre vincula).
+- [x] Sharingan Copy: jutsus copiados passam a pagar a economia padrão (teto por rank, desconto de maestria do PRÓPRIO copiador) em vez dos 70% fixos, e respeitam o piso de cooldown do rank de origem dentro da janela de 60s.
+- [x] Como referência sob os novos pools: Genin paga ~140 por um A-rank (3 usos do pool), Hokage ~176 (8 usos); maestria reduz pela metade.
+
+### Dano
+
+- [x] Faixas de dano por rank (1 golpe, carga máxima, maestria 0): D 6–10 / C 10–16 / B 16–24 / A 24–36 / S 40–60; multi-hit ≤ 1.5x da faixa.
+- [x] Housenka (dragão): era 20·poder (até ~100 + explosão de 5 blocos) por 36 de chakra em rank D — agora 7+3.5·poder (teto 2.0), explosão 2.5, fogo 5s.
+- [x] Kekkei Mora "80 Gods": era 500 absoluto repetível a cada 4 ticks sem cooldown — agora 48 na faixa S, recarga a cada 20 ticks, cooldown 1200t (20s) acima do piso.
+- [x] Chidori: ramo sem arma 25 → 22 (dentro da faixa A); multiplicador de nível ninja mantido.
+- [x] Bracken Dance: espinho 20 fixo → 9 decrescente.
+- [x] Tetos de poder adicionados onde o pool substituía o rank: Chidori Senbon 2.2, Retsudo Tensho 2.2 (7+3·poder), Shuriken Shadow Clone 2.0 (2+0.3·poder), Tsumabeni 2.2 (1.5+0.25·poder por agulha).
+- [x] Multiplicador de dano de jutsu pelo atributo Chakra: ×(1+0.10·F) aplicado nos pontos de dano compartilhados (blast de Bloodlines e callbacks ajustados); genins ×1.10, Hokage ×1.40.
+- [x] Paper bombs, Four-Pillar Bind, Phoenix, bloodlines e genjutsu: intatos (já documentados e conformes).
+
+### Comandos e verificação
+
+- [x] `/rpstats` segue como superfície canônica; os comandos legados permanecem registrados (compatibilidade), com `/rpadmin` já sendo o mesmo handler de `/adminmissions`.
+- [x] Removida a classe morta nunca registrada `/setstatpointcap`.
+- [x] Novo fixture `checkStatsRebalance` (591 checagens) no `gradle check`, provando as tabelas do plano, monotonicidade 1→100M e a tabela de custos nos novos pools.
+- [x] Backup pré-rebalanceio: commit `f828586` + tag `backup-2026-09-26-pre-rebalance` + zip em `../narutomod-backup-2026-09-26-pre-rebalance.zip` (handoff para integração com outro mod).
+- [ ] Pendente: playtest ao vivo com dois clientes (miguação de personagens antigos, sensação de custo por rank, Susanoo/Edo/upkeep, copy spam, movimento Genin vs Hokage) e a varredura P5 (dano de NPCs, cura, recompensas, limiares de XP).

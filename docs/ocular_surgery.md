@@ -1,4 +1,6 @@
-# Ocular surgery — playable socket system
+# Ocular surgery — historical feature guide
+
+> **Current handoff:** see the ocular section in [`../AI_HANDOFF.md`](../AI_HANDOFF.md). In particular, extracted organs currently return to the medic/surgeon, inventory eyes are side-neutral, and present code does not preserve an immutable donor birth side as this older guide implied.
 
 This is an opt-in system for Forge 1.12.2. **Use a copied world first.** Completing surgery converts that patient's legacy paired-eye equipment into persistent left/right sockets. There is no in-game conversion back to the legacy equipment system. Players who have never completed surgery use the original hotbar dojutsu selector: left/right arrows to browse, Enter to confirm and G to toggle.
 

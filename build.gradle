@@ -108,3 +108,12 @@ task checkBloodlineTechniques(type: JavaExec) {
     workingDir projectDir
 }
 check.dependsOn checkBloodlineTechniques
+
+// Proves the 2026-09 stats/jutsu economy rebalance math (docs/stats_and_jutsu_economy_rebalance.md).
+task checkStatsRebalance(type: JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'net.narutomod.StatsRebalanceChecks'
+    workingDir projectDir
+}
+check.dependsOn checkStatsRebalance
